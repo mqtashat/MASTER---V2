@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-10 | [الموظف غير المعرّف في الاستيراد — 10/10/2026](rounds/2026-10-10-unknown-employee.md) | 3 |
 | 2026-10-08 | [اعتماد التقارير والتقويم والصلاحيات ودعم الهاتف — 8/10/2026](rounds/2026-10-08-reports-calendar-permissions-mobile.md) | 6 |
 | 2026-10-08 | [اعتماد تجربة استخدام الخرائط — 8/10/2026](rounds/2026-10-08-maps-ux.md) | 6 |
 | 2026-10-07 | [استكمال معتمد — 7/10/2026، الإصدار0.1.64](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) | 14 |
@@ -124,6 +125,7 @@
 | DATA-007 | يتيح سجل الرفع حذف دفعة سندات كاملة سبق رفعها. حذف الدفعة تراجع عن أثر تلك الرفعة وفق… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md)، [integration-review](../60-reference/integration-review.md) |
 | DATA-008 | أوضح المستخدم أن الملفات المرسلة كلها أمثلة، وأن الملفات الحقيقية ستُرفع بعد تطوير… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
 | DATA-009 | تبقى التعريفات في صفحاتها CUS-001 وEMP-001 وPRD-005، والرفع الموحد للحركات الثلاث… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
+| DATA-010 | رقم الموظف غير المعرّف يمنع اعتماد السند المتأثر؛ يُعرَّف ثم يعاد الرفع… | [2026-10-10-unknown-employee](rounds/2026-10-10-unknown-employee.md) |
 
 ### DATE — التواريخ وتنسيقها
 

@@ -3,7 +3,7 @@
 > منقول من `docs/MASTER-SPEC.md`، القسم «2. الوحدات المعتمدة».
 
 > **ترتيب الأولوية:** هذا الملف نص المرجع الأصلي لهذا المجال. تتقدم عليه عند التعارض:
-> 1. جولات الاعتماد الأحدث: [2026-10-07-fractional-quantities](../40-decisions/rounds/2026-10-07-fractional-quantities.md)، [2026-10-07-preview-review](../40-decisions/rounds/2026-10-07-preview-review.md)، [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](../40-decisions/rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)
+> 1. جولات الاعتماد الأحدث: [2026-10-10-unknown-employee](../40-decisions/rounds/2026-10-10-unknown-employee.md)، [2026-10-07-fractional-quantities](../40-decisions/rounds/2026-10-07-fractional-quantities.md)، [2026-10-07-preview-review](../40-decisions/rounds/2026-10-07-preview-review.md)، [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](../40-decisions/rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)
 > 2. [بنود الاعتماد المجمع B001–B094](../40-decisions/B001-B094.md) ذات الصلة.
 > 
 > [كيف تقرأ المرجع](../00-guide/how-to-read.md) · [فهرس القرارات](../40-decisions/INDEX.md)
