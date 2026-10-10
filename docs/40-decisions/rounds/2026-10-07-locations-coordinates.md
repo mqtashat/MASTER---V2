@@ -7,7 +7,7 @@
 | الأولوية | تتقدم على النصوص الأقدم عند التعارض |
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [03-customers.md](../../10-spec/03-customers.md)، [06-invoices.md](../../10-spec/06-invoices.md)، [07-returns.md](../../10-spec/07-returns.md)، [12-maps.md](../../10-spec/12-maps.md)، [P06-invoices-returns-collections.md](../../20-ux/pages/P06-invoices-returns-collections.md)، [P15-invoice-map-route.md](../../20-ux/pages/P15-invoice-map-route.md)، [P16-customer-locations.md](../../20-ux/pages/P16-customer-locations.md) |
-| دُمج في | [06-invoices.md](../../10-spec/06-invoices.md)، [07-returns.md](../../10-spec/07-returns.md) — 2026-10-10 |
+| دُمج في | [03-customers.md](../../10-spec/03-customers.md)، [06-invoices.md](../../10-spec/06-invoices.md)، [07-returns.md](../../10-spec/07-returns.md) — 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 
