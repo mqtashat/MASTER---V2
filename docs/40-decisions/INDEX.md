@@ -55,7 +55,7 @@
 | AUTH-001 | حساب الإدارة Admin كامل الصلاحيات، وحسابات أخرى يمكن إنشاؤها وتسميتها وتحديد ما يسمح… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | AUTH-002 | مصفوفة صفحة/تبويب/إجراء مع العرض والإضافة والتعديل والحذف والاستيراد والتصدير والطباعة… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | AUTH-003 | الإدارة تدير إنشاء الحسابات وتوقيفها وإعادة تعيين رمز الدخول وتغيير الصلاحيات؛… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
-| AUTH-004 | فتح الأشهر المقفلة والتعديل المطلق للإدارة فقط برمز سري تضعه لنفسها | [2026-10-10-data-upload](rounds/2026-10-10-data-upload.md) |
+| AUTH-004 | فتح الشهر المقفل وأي تعديل على فترة مقفلة للإدارة فقط برمز سري تضعه لنفسها | [2026-10-10-data-upload](rounds/2026-10-10-data-upload.md) |
 
 ### BASE — الأساس المعتمد
 
