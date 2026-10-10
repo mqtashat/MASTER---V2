@@ -7,7 +7,7 @@
 | الأولوية | تتقدم على النصوص الأقدم عند التعارض |
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [02-data-units-and-upload.md](../../10-spec/02-data-units-and-upload.md)، [09-customer-statement.md](../../10-spec/09-customer-statement.md)، [P05-unified-upload.md](../../20-ux/pages/P05-unified-upload.md)، [P06-invoices-returns-collections.md](../../20-ux/pages/P06-invoices-returns-collections.md)، [P07-customer-statement.md](../../20-ux/pages/P07-customer-statement.md)، [print.md](../../20-ux/print.md) |
-| دُمج في | [02-data-units-and-upload.md](../../10-spec/02-data-units-and-upload.md) (الرفع الموحد) — 2026-10-10 |
+| دُمج في | [02-data-units-and-upload.md](../../10-spec/02-data-units-and-upload.md) (الرفع الموحد)، [09-customer-statement.md](../../10-spec/09-customer-statement.md) (الكشف والطباعة) — 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 
