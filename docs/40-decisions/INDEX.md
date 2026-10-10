@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-10 | [الأرصدة الافتتاحية — 10/10/2026](rounds/2026-10-10-opening-balances.md) | 1 |
 | 2026-10-10 | [الرصيد الدائن وإخفاء الحركات — 10/10/2026](rounds/2026-10-10-statement.md) | 2 |
 | 2026-10-10 | [قيم الدفع وديون الحساب الرئيسي — 10/10/2026](rounds/2026-10-10-collections.md) | 2 |
 | 2026-10-10 | [السند المعلّق ورمز الإدارة للمقفل — 10/10/2026](rounds/2026-10-10-data-upload.md) | 2 |
@@ -180,6 +181,10 @@
 | FIN-002 | معتمد صراحة من المستخدم: بداية السنة وقالب الأرصدة وإدارتها. | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
 | FIN-003 | اعتماد القالب وطريقة إدارته ورفعه وتعديله بعد عرضها للمستخدم. | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
 | FIN-004 | «تخصم من الرصيد الافتتاحي اولا ثم الفواتير». | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
+| FIN-005 | تعدد الافتتاحيات في العائلة: تقسيم جزء التحصيل بالتساوي | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-006 | الخانة الفارغة المقابلة في قالب الافتتاحي صفر | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-007 | الإشعار الدائن ومرتجع الذمم يخصصان مثل التحصيل | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-008 | حذف دفعة الافتتاحيات بسلوك DATA-007 | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
 
 ### GOAL — الأهداف
 
