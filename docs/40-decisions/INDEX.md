@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-10 | [عبارة المسار ومسار المقاييس المتخصصة — 10/10/2026](rounds/2026-10-10-goals.md) | 2 |
 | 2026-10-10 | [المبلغ المؤهل وعمولة المشرف — 10/10/2026](rounds/2026-10-10-commissions.md) | 3 |
 | 2026-10-10 | [الموظف غير المعرّف في الاستيراد — 10/10/2026](rounds/2026-10-10-unknown-employee.md) | 3 |
 | 2026-10-08 | [اعتماد التقارير والتقويم والصلاحيات ودعم الهاتف — 8/10/2026](rounds/2026-10-08-reports-calendar-permissions-mobile.md) | 6 |
@@ -84,6 +85,7 @@
 | CARD-003 | معتمد بتاريخ 5/10/2026: اختيار حركات «حتى اليوم» و«حتى الأمس» بتاريخ السند الأصلي. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | CARD-004 | معتمد مع تعديل العرض بتاريخ 5/10/2026: المطلوب حتى المتابعة ومؤشر المسار. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | CARD-005 | معتمد بتاريخ 6/10/2026: فترة كاملة بلا أيام عمل مؤهلة. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
+| CARD-006 | عبارة المسار «متقدم/متأخر» اختيارية في البطاقة | [2026-10-10-goals](rounds/2026-10-10-goals.md) |
 
 ### COL — التحصيلات
 
@@ -184,7 +186,7 @@
 | GOAL-008 | معتمد بتاريخ 5/10/2026: تقريب أهداف الأعداد الصحيحة للأعلى بعد جميع التعديلات. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | GOAL-009 | معتمد بتاريخ 5/10/2026: اختيار تأثر كل مكون هدف بتعديل أيام العمل. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | GOAL-010 | معتمد بتاريخ 6/10/2026: افتراضي تأثر المكون بالأيام ونسخ إعداد القالب. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
-| GOAL-011 | هدف المشرف الافتراضي والنقل | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| GOAL-011 | هدف المشرف الافتراضي والنقل | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)، [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 
 ### INV — الفواتير
 

@@ -7,7 +7,7 @@
 | الأولوية | تتقدم على النصوص الأقدم عند التعارض |
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [05-products-and-commission-rates.md](../../10-spec/05-products-and-commission-rates.md)، [06-invoices.md](../../10-spec/06-invoices.md)، [07-returns.md](../../10-spec/07-returns.md)، [02-data-units-and-upload.md](../../10-spec/02-data-units-and-upload.md)، [P05-unified-upload.md](../../20-ux/pages/P05-unified-upload.md)، [P13-performance-cards.md](../../20-ux/pages/P13-performance-cards.md) |
-| دُمج في | [07-returns.md](../../10-spec/07-returns.md) — 2026-10-10 |
+| دُمج في | [07-returns.md](../../10-spec/07-returns.md)، [11-goals-commissions-permissions.md](../../10-spec/11-goals-commissions-permissions.md) (GOAL-008) — 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 
