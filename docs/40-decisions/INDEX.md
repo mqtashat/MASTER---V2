@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-10 | [المبلغ المؤهل وعمولة المشرف — 10/10/2026](rounds/2026-10-10-commissions.md) | 3 |
 | 2026-10-10 | [الموظف غير المعرّف في الاستيراد — 10/10/2026](rounds/2026-10-10-unknown-employee.md) | 3 |
 | 2026-10-08 | [اعتماد التقارير والتقويم والصلاحيات ودعم الهاتف — 8/10/2026](rounds/2026-10-08-reports-calendar-permissions-mobile.md) | 6 |
 | 2026-10-08 | [اعتماد تجربة استخدام الخرائط — 8/10/2026](rounds/2026-10-08-maps-ux.md) | 6 |
@@ -104,7 +105,10 @@
 | COMM-001 | كشف العمولة يشرح استحقاق الموظف: النتيجة، أساس المبيعات، القاعدة، الشريحة والنسبة… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | COMM-002 | الشريحة المحققة ثم اليدوية ثم الأساسية ثم المكافآت ثم الإضافات/الخصومات ثم النهائي؛… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | COMM-003 | «كشف حسابات العمولات» تبويب شهري تجميعي بصف لكل مندوب أو مشرف، متميز بالاسم والوظيفة عن… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
-| COMM-004 | قاعدة عمولة شهرية وشرائح مرنة | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| COMM-004 | قاعدة عمولة شهرية وشرائح مرنة | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)، [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
+| COMM-005 | المبلغ المؤهل للعمولة: المباشر والعروض والنقدي والذمم معًا | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-006 | أساس عمولة المشرف: فريقه، ومبيعاته الشخصية معلّقة حتى نسبة شهرية يدوية… | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-007 | الموظف غير المشمول بقاعدة الشهر إعداد ناقص | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
 
 ### CUS — العملاء
 
