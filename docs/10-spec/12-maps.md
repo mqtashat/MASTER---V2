@@ -6,7 +6,7 @@
 > 1. جولات الاعتماد الأحدث: [2026-10-10-maps](../40-decisions/rounds/2026-10-10-maps.md)، [2026-10-08-maps-ux](../40-decisions/rounds/2026-10-08-maps-ux.md)، [2026-10-07-locations-coordinates](../40-decisions/rounds/2026-10-07-locations-coordinates.md)، [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](../40-decisions/rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)، [2026-10-07-v0.1.63-map-day-allocation-sources](../40-decisions/rounds/2026-10-07-v0.1.63-map-day-allocation-sources.md)
 > 2. [بنود الاعتماد المجمع B001–B094](../40-decisions/B001-B094.md) ذات الصلة.
 > 
-> **دُمج في قسم الخرائط بتاريخ 10/10/2026:** جولة تجربة الخرائط 8/10، وMAP-010 من جولة 0.1.64، وDAY-001، وبنود B063–B071، وقرارا [MAP-011 وMAP-012](../40-decisions/rounds/2026-10-10-maps.md). النصوص التي حلّ محلها الدمج محفوظة حرفيًا في [آخر الملف](#النص-قبل-الدمج--للرجوع-فقط).
+> **دُمج في قسم الخرائط بتاريخ 10/10/2026:** جولة تجربة الخرائط 8/10، وMAP-010 من جولة 0.1.64، وDAY-001، وبنود B063–B071، وقرارات [MAP-011 وMAP-012 وMAP-013](../40-decisions/rounds/2026-10-10-maps.md). النصوص التي حلّ محلها الدمج محفوظة حرفيًا في [آخر الملف](#النص-قبل-الدمج--للرجوع-فقط).
 > 
 > [كيف تقرأ المرجع](../00-guide/how-to-read.md) · [فهرس القرارات](../40-decisions/INDEX.md)
 
