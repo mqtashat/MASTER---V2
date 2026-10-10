@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-10 | [المنتجات: الضريبة والتعبئة وسعر التكلفة — 10/10/2026](rounds/2026-10-10-products.md) | 1 |
 | 2026-10-10 | [عمولة التحصيل لمندوبين محددين — 10/10/2026](rounds/2026-10-10-collection-commission.md) | 4 |
 | 2026-10-10 | [العملاء — 10/10/2026](rounds/2026-10-10-customers.md) | 1 |
 | 2026-10-10 | [الأرصدة الافتتاحية — 10/10/2026](rounds/2026-10-10-opening-balances.md) | 1 |
@@ -145,7 +146,7 @@
 | DATA-007 | يتيح سجل الرفع حذف دفعة سندات كاملة سبق رفعها. حذف الدفعة تراجع عن أثر تلك الرفعة وفق… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md)، [integration-review](../60-reference/integration-review.md) |
 | DATA-008 | أوضح المستخدم أن الملفات المرسلة كلها أمثلة، وأن الملفات الحقيقية ستُرفع بعد تطوير… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
 | DATA-009 | تبقى التعريفات في صفحاتها CUS-001 وEMP-001 وPRD-005، والرفع الموحد للحركات الثلاث… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
-| DATA-011 | مبالغ المصدر شاملة للضريبة؛ لا تضاف ضريبة (تأكيد B030) | [2026-10-10-invoices](rounds/2026-10-10-invoices.md) |
+| DATA-011 | كل المبالغ والأسعار شاملة للضريبة؛ لا ضريبة في النظام | [2026-10-10-invoices](rounds/2026-10-10-invoices.md) |
 | DATA-010 | رقم الموظف غير المعرّف يمنع اعتماد السند المتأثر؛ يُعرَّف ثم يعاد الرفع… | [2026-10-10-unknown-employee](rounds/2026-10-10-unknown-employee.md) |
 
 ### DATE — التواريخ وتنسيقها
@@ -274,6 +275,7 @@
 | PRD-004 | رقم عمولة المشرف يمثل معدلًا بالألف: 3 يعني 3‰، والحساب على أساس المبلغ المؤهل × 3 ÷ 1000. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-005 | استيراد وتصدير ملف المنتجات من صفحة المنتجات داخل وحدة البيانات. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-006 | تحديث الموجود وإضافة الجديد باستخدام كود الصنف، مع المعاينة والاعتماد. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
+| PRD-007 | عمود «عدد الحبات في الكرتونة» = عدد الباكيتات في الكرتونة؛ 1 = لا تحويل | [2026-10-10-products](rounds/2026-10-10-products.md) |
 | PRD-007 | المعاينة قبل الاعتماد | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-008 | التصدير | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 
@@ -283,6 +285,7 @@
 |---|---|---|
 | PRICE-001 | يمكن تغيير سعر الصنف في أي وقت، مع ضبط تاريخ اعتماد السعر؛ ويجوز أن يكون التاريخ ماضيًا… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md)، [integration-review](../60-reference/integration-review.md) |
 | PRICE-002 | أسعار البيع عند إعادة الاستيراد | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
+| PRICE-003 | سعر التكلفة بتاريخ سريان وسجل كسعر البيع | [2026-10-10-products](rounds/2026-10-10-products.md) |
 
 ### PRINT — الطباعة
 
