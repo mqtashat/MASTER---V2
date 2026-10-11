@@ -46,3 +46,7 @@
 | P19 | [P19 — التقويم](pages/P19-calendar.md) | 1 |
 | P20 | [P20 — المستخدمون والصلاحيات](pages/P20-users-permissions.md) | 1 |
 | P21 | [P21 — الإعدادات وسجل العمليات](pages/P21-settings-audit-log.md) | 1 |
+
+## التصميم البصري المعتمد
+
+اعتُمدت المعاينة البصرية في [UX-007](../40-decisions/rounds/2026-10-11-visual-design.md)؛ نسختها في [preview/master-preview.html](preview/master-preview.html)، وهي مرجع شكل بقية الصفحات.
