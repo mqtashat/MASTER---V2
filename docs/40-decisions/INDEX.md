@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-11 | [معاينة بطاقة الأداء وشريحة المسار — 11/10/2026](rounds/2026-10-11-performance-card-preview.md) | 2 |
 | 2026-10-11 | [عينات واقعية وقيم الدفع — 11/10/2026](rounds/2026-10-11-real-samples.md) | 4 |
 | 2026-10-10 | [الخرائط — 10/10/2026](rounds/2026-10-10-maps.md) | 2 |
 | 2026-10-10 | [المنتجات: الضريبة والتعبئة وسعر التكلفة — 10/10/2026](rounds/2026-10-10-products.md) | 1 |
@@ -99,6 +100,9 @@
 | CARD-012 | عمود عمر الذمة وتسمية «افتتاحي» ومحتوى البطاقتين وفق المراجع المصورة | [2026-10-07-cards-image-references](rounds/2026-10-07-cards-image-references.md) |
 | CARD-013 | نسبة النقدية وقيم DocumentTypeID النصية | [2026-10-07-cash-indicator-source-check](rounds/2026-10-07-cash-indicator-source-check.md) |
 | CARD-014 | تعريف النقدية ببادئة «مبيعات نقدية» في اسم العميل | [2026-10-07-cash-metric-correction](rounds/2026-10-07-cash-metric-correction.md) |
+| CARD-015 | شريحة المسار في الشريحة المركبة: كل مكوّن قابل للمسار في AND أو أحدها في OR | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
+| CARD-016 | قائمة «تفاصيل البطاقة» لإظهار العناصر وإخفائها، و«NONE»، وقيم الفلاتر | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
+| CARD-017 | ثلاث بطاقات طولية في الصف وأربع على الشاشة الكبيرة | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
 |---|---|---|
 | CARD-001 | «بطاقات أداء الموظفين» صفحة مستقلة بمدخل في الشريط الجانبي ضمن وظائف وحدة الأهداف.… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | CARD-002 | حفظ البطاقة نفسها كصورة بالحالة المعروضة والفترة وتاريخ القطع والأقسام الظاهرة، بكامل… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
