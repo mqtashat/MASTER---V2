@@ -8,6 +8,25 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-11 | [فحص شهر 1/2026 الحقيقي — 11/10/2026](rounds/2026-10-11-january-2026-sample.md) | 5 |
+| 2026-10-11 | [هيكل المشروع والمنصة — 11/10/2026](rounds/2026-10-11-build-structure.md) | 2 |
+| 2026-10-11 | [حسم التعارضات والتفاصيل المفتوحة — 11/10/2026](rounds/2026-10-11-conflicts.md) | 5 |
+| 2026-10-11 | [التصميم البصري — 11/10/2026](rounds/2026-10-11-visual-design.md) | 2 |
+| 2026-10-11 | [المقاييس المتخصصة وهدف التحصيل وتعديلات البطاقة — 11/10/2026](rounds/2026-10-11-metrics.md) | 3 |
+| 2026-10-11 | [معاينة بطاقة الأداء وشريحة المسار — 11/10/2026](rounds/2026-10-11-performance-card-preview.md) | 2 |
+| 2026-10-11 | [عينات واقعية وقيم الدفع — 11/10/2026](rounds/2026-10-11-real-samples.md) | 4 |
+| 2026-10-10 | [الخرائط — 10/10/2026](rounds/2026-10-10-maps.md) | 2 |
+| 2026-10-10 | [المنتجات: الضريبة والتعبئة وسعر التكلفة — 10/10/2026](rounds/2026-10-10-products.md) | 1 |
+| 2026-10-10 | [عمولة التحصيل لمندوبين محددين — 10/10/2026](rounds/2026-10-10-collection-commission.md) | 4 |
+| 2026-10-10 | [العملاء — 10/10/2026](rounds/2026-10-10-customers.md) | 1 |
+| 2026-10-10 | [الأرصدة الافتتاحية — 10/10/2026](rounds/2026-10-10-opening-balances.md) | 1 |
+| 2026-10-10 | [الرصيد الدائن وإخفاء الحركات — 10/10/2026](rounds/2026-10-10-statement.md) | 2 |
+| 2026-10-10 | [قيم الدفع وديون الحساب الرئيسي — 10/10/2026](rounds/2026-10-10-collections.md) | 2 |
+| 2026-10-10 | [السند المعلّق ورمز الإدارة للمقفل — 10/10/2026](rounds/2026-10-10-data-upload.md) | 2 |
+| 2026-10-10 | [الضريبة وقيم نوع الفاتورة — 10/10/2026](rounds/2026-10-10-invoices.md) | 1 |
+| 2026-10-10 | [عبارة المسار ومسار المقاييس المتخصصة — 10/10/2026](rounds/2026-10-10-goals.md) | 2 |
+| 2026-10-10 | [المبلغ المؤهل وعمولة المشرف — 10/10/2026](rounds/2026-10-10-commissions.md) | 3 |
+| 2026-10-10 | [الموظف غير المعرّف في الاستيراد — 10/10/2026](rounds/2026-10-10-unknown-employee.md) | 3 |
 | 2026-10-08 | [اعتماد التقارير والتقويم والصلاحيات ودعم الهاتف — 8/10/2026](rounds/2026-10-08-reports-calendar-permissions-mobile.md) | 6 |
 | 2026-10-08 | [اعتماد تجربة استخدام الخرائط — 8/10/2026](rounds/2026-10-08-maps-ux.md) | 6 |
 | 2026-10-07 | [استكمال معتمد — 7/10/2026، الإصدار0.1.64](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) | 14 |
@@ -36,6 +55,7 @@
 | المعرّف | الوصف | الموضع |
 |---|---|---|
 | ALLOC-001 | سياسة العميل تتقدم عند تعارضها مع توزيع الفروع الوارد في الملف. يحفظ المصدر كما ورد؛… | [2026-10-07-v0.1.63-map-day-allocation-sources](rounds/2026-10-07-v0.1.63-map-day-allocation-sources.md) |
+| ALLOC-002 | ديون الحساب الرئيسي تدخل توزيع تحصيله افتراضيًا، ويمكن تغييره لكل عميل | [2026-10-10-collections](rounds/2026-10-10-collections.md) |
 
 ### ANA — تحليل الأنظمة السابقة
 
@@ -50,6 +70,7 @@
 | AUTH-001 | حساب الإدارة Admin كامل الصلاحيات، وحسابات أخرى يمكن إنشاؤها وتسميتها وتحديد ما يسمح… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | AUTH-002 | مصفوفة صفحة/تبويب/إجراء مع العرض والإضافة والتعديل والحذف والاستيراد والتصدير والطباعة… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | AUTH-003 | الإدارة تدير إنشاء الحسابات وتوقيفها وإعادة تعيين رمز الدخول وتغيير الصلاحيات؛… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
+| AUTH-004 | فتح الشهر المقفل وأي تعديل على فترة مقفلة للإدارة فقط برمز سري تضعه لنفسها | [2026-10-10-data-upload](rounds/2026-10-10-data-upload.md) |
 
 ### BASE — الأساس المعتمد
 
@@ -59,6 +80,8 @@
 | BASE-002 | الاتفاق أولًا على ملفات الرفع ومصادر البيانات وهيكل الأعمدة ومعانيها | [01-foundation](../10-spec/01-foundation.md) |
 | BASE-003 | يجوز تعديل قواعد العمل أثناء التخطيط؛ الأولوية لتثبيت الأساس | [01-foundation](../10-spec/01-foundation.md) |
 | BASE-004 | تقسيم النظام إلى وحدات البيانات والحسابات والأهداف والخرائط | [01-foundation](../10-spec/01-foundation.md) |
+| BASE-005 | هيكل المشروع: docs/ وapp/ وsupabase/ وtests/ | [2026-10-11-build-structure](rounds/2026-10-11-build-structure.md) |
+| BASE-006 | المنصة: Google AI Studio App وSupabase | [2026-10-11-build-structure](rounds/2026-10-11-build-structure.md) |
 
 ### CAL — التقويم وأيام العمل
 
@@ -76,12 +99,25 @@
 ### CARD — بطاقات الأداء والذمم
 
 | المعرّف | الوصف | الموضع |
+| CARD-007 | بطاقات الذمم: المتأخر بالأحمر وتسمية «مستقل» ونطاق المندوب | [2026-10-07-receivables-performance-cards](rounds/2026-10-07-receivables-performance-cards.md) |
+| CARD-008 | بطاقة الأداء: صفوف الشريحة الثلاثة والألوان والإظهار والإخفاء | [2026-10-07-receivables-performance-cards](rounds/2026-10-07-receivables-performance-cards.md) |
+| CARD-009 | شريط ملخص الأداء في سطر أفقي واحد | [2026-10-07-performance-summary-bar](rounds/2026-10-07-performance-summary-bar.md) |
+| CARD-010 | بطاقات A وB وC المتجاورة وإخفاء X والأعداد الصحيحة | [2026-10-07-performance-goal-tiles](rounds/2026-10-07-performance-goal-tiles.md) |
+| CARD-011 | تقليل المسافات الرأسية في بطاقة الأداء | [2026-10-07-performance-card-compact](rounds/2026-10-07-performance-card-compact.md) |
+| CARD-012 | عمود عمر الذمة وتسمية «افتتاحي» ومحتوى البطاقتين وفق المراجع المصورة | [2026-10-07-cards-image-references](rounds/2026-10-07-cards-image-references.md) |
+| CARD-013 | نسبة النقدية وقيم DocumentTypeID النصية | [2026-10-07-cash-indicator-source-check](rounds/2026-10-07-cash-indicator-source-check.md) |
+| CARD-014 | تعريف النقدية ببادئة «مبيعات نقدية» في اسم العميل | [2026-10-07-cash-metric-correction](rounds/2026-10-07-cash-metric-correction.md) |
+| CARD-015 | شريحة المسار في الشريحة المركبة: كل مكوّن قابل للمسار في AND أو أحدها في OR | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
+| CARD-016 | قائمة «تفاصيل البطاقة» لإظهار العناصر وإخفائها، و«NONE»، وقيم الفلاتر | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
+| CARD-017 | ثلاث بطاقات طولية في الصف وأربع على الشاشة الكبيرة | [2026-10-11-performance-card-preview](rounds/2026-10-11-performance-card-preview.md) |
+| CARD-018 | تعديلات المعاينة: «متقدم/متأخر» للإدارة، خط عريض، متوسط الفواتير، NONE بالأحمر الفاتح | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
 |---|---|---|
 | CARD-001 | «بطاقات أداء الموظفين» صفحة مستقلة بمدخل في الشريط الجانبي ضمن وظائف وحدة الأهداف.… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | CARD-002 | حفظ البطاقة نفسها كصورة بالحالة المعروضة والفترة وتاريخ القطع والأقسام الظاهرة، بكامل… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | CARD-003 | معتمد بتاريخ 5/10/2026: اختيار حركات «حتى اليوم» و«حتى الأمس» بتاريخ السند الأصلي. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | CARD-004 | معتمد مع تعديل العرض بتاريخ 5/10/2026: المطلوب حتى المتابعة ومؤشر المسار. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | CARD-005 | معتمد بتاريخ 6/10/2026: فترة كاملة بلا أيام عمل مؤهلة. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
+| CARD-006 | عبارة المسار «متقدم/متأخر» اختيارية بإعداد عام تحدده الإدارة | [2026-10-10-goals](rounds/2026-10-10-goals.md) |
 
 ### COL — التحصيلات
 
@@ -95,6 +131,12 @@
 | COL-006 | تصدير Excel من صفحة التحصيلات بخيار الجدول المعروض (صفحة العرض الحالية بأعمدتها… | [08-collections](../10-spec/08-collections.md) |
 | COL-007 | الشيك يعتبر تحصيلًا، ولا يطلب من النظام تتبع صرف الشيكات. | [08-collections](../10-spec/08-collections.md)، [integration-review](../60-reference/integration-review.md) |
 | COL-008 | يوزع التحصيل على الأفرع، وتغلق الفواتير الأقدم أولًا. أضاف المستخدم لاحقًا أولوية تسديد… | [08-collections](../10-spec/08-collections.md)، [integration-review](../60-reference/integration-review.md) |
+| COL-009 | قيمة الدفع ---- خطأ يمنع اعتماد السند حتى يُصحَّح | [2026-10-10-collections](rounds/2026-10-10-collections.md) |
+| COL-010 | الصف النقدي ذو رقم الشيك يقبل نقديًا ويبقى الرقم للعرض | [2026-10-10-collections](rounds/2026-10-10-collections.md) |
+| COL-011 | قيم «الدفع» المقبولة: نقدي وشيك مؤجل وشيك مستحق الدفع فقط | [2026-10-11-real-samples](rounds/2026-10-11-real-samples.md) |
+| COL-012 | فحص عينة تحصيلات واقعية 11/10 | [2026-10-11-real-samples](rounds/2026-10-11-real-samples.md) |
+| COL-013 | صفوف التحصيل الصفرية تظهر في التفاصيل مميزة | [2026-10-11-conflicts](rounds/2026-10-11-conflicts.md) |
+| COL-014 | نتيجة فحص تحصيلات شهر 1/2026 | [2026-10-11-january-2026-sample](rounds/2026-10-11-january-2026-sample.md) |
 
 ### COMM — العمولات
 
@@ -103,12 +145,18 @@
 | COMM-001 | كشف العمولة يشرح استحقاق الموظف: النتيجة، أساس المبيعات، القاعدة، الشريحة والنسبة… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | COMM-002 | الشريحة المحققة ثم اليدوية ثم الأساسية ثم المكافآت ثم الإضافات/الخصومات ثم النهائي؛… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | COMM-003 | «كشف حسابات العمولات» تبويب شهري تجميعي بصف لكل مندوب أو مشرف، متميز بالاسم والوظيفة عن… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
-| COMM-004 | قاعدة عمولة شهرية وشرائح مرنة | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| COMM-004 | قاعدة عمولة شهرية وشرائح مرنة | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)، [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
+| COMM-005 | المبلغ المؤهل للعمولة: المباشر والعروض والنقدي والذمم معًا | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-006 | أساس عمولة المشرف: فريقه، ومبيعاته الشخصية معلّقة حتى نسبة شهرية يدوية… | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-007 | الموظف غير المشمول بقاعدة الشهر إعداد ناقص | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-008 | عمولة التحصيل لمندوبين تختارهم الإدارة: النقدي + المسدد من الذمم − المرتجعات | [2026-10-10-collection-commission](rounds/2026-10-10-collection-commission.md) |
 
 ### CUS — العملاء
 
 | المعرّف | الوصف | الموضع |
 |---|---|---|
+| CUS-002 | CompanyID يبقى في ملف تصدير العملاء غير مفعّل | [2026-10-10-customers](rounds/2026-10-10-customers.md) |
+| CUS-003 | رقم الرئيسي الفارغ = مستقل؛ اختلاف الاسم يعتمد سجل الرئيسي مع تنبيه | [2026-10-10-customers](rounds/2026-10-10-customers.md) |
 | CUS-001 | الاستيراد والتصدير من صفحة العملاء ضمن وحدة البيانات. | [03-customers](../10-spec/03-customers.md)، [integration-review](../60-reference/integration-review.md) |
 
 ### DATA — البيانات والرفع والاستيراد
@@ -124,6 +172,8 @@
 | DATA-007 | يتيح سجل الرفع حذف دفعة سندات كاملة سبق رفعها. حذف الدفعة تراجع عن أثر تلك الرفعة وفق… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md)، [integration-review](../60-reference/integration-review.md) |
 | DATA-008 | أوضح المستخدم أن الملفات المرسلة كلها أمثلة، وأن الملفات الحقيقية ستُرفع بعد تطوير… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
 | DATA-009 | تبقى التعريفات في صفحاتها CUS-001 وEMP-001 وPRD-005، والرفع الموحد للحركات الثلاث… | [02-data-units-and-upload](../10-spec/02-data-units-and-upload.md) |
+| DATA-011 | كل المبالغ والأسعار شاملة للضريبة؛ لا ضريبة في النظام | [2026-10-10-invoices](rounds/2026-10-10-invoices.md) |
+| DATA-010 | رقم الموظف غير المعرّف يمنع اعتماد السند المتأثر؛ يُعرَّف ثم يعاد الرفع… | [2026-10-10-unknown-employee](rounds/2026-10-10-unknown-employee.md) |
 
 ### DATE — التواريخ وتنسيقها
 
@@ -163,6 +213,10 @@
 | FIN-002 | معتمد صراحة من المستخدم: بداية السنة وقالب الأرصدة وإدارتها. | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
 | FIN-003 | اعتماد القالب وطريقة إدارته ورفعه وتعديله بعد عرضها للمستخدم. | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
 | FIN-004 | «تخصم من الرصيد الافتتاحي اولا ثم الفواتير». | [10-opening-balances](../10-spec/10-opening-balances.md)، [integration-review](../60-reference/integration-review.md) |
+| FIN-005 | تعدد الافتتاحيات في العائلة: التساوي للافتتاحيات فقط وإعادة توزيع الفائض ثم الفواتير بالأقدم | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-006 | الخانة الفارغة المقابلة في قالب الافتتاحي صفر | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-007 | الإشعار الدائن ومرتجع الذمم يخصصان مثل التحصيل | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
+| FIN-008 | حذف دفعة الافتتاحيات بسلوك DATA-007 | [2026-10-10-opening-balances](rounds/2026-10-10-opening-balances.md) |
 
 ### GOAL — الأهداف
 
@@ -178,7 +232,13 @@
 | GOAL-008 | معتمد بتاريخ 5/10/2026: تقريب أهداف الأعداد الصحيحة للأعلى بعد جميع التعديلات. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | GOAL-009 | معتمد بتاريخ 5/10/2026: اختيار تأثر كل مكون هدف بتعديل أيام العمل. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
 | GOAL-010 | معتمد بتاريخ 6/10/2026: افتراضي تأثر المكون بالأيام ونسخ إعداد القالب. | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md)، [integration-review](../60-reference/integration-review.md) |
-| GOAL-011 | هدف المشرف الافتراضي والنقل | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| GOAL-011 | هدف المشرف الافتراضي والنقل | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md)، [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
+| GOAL-012 | العملاء الجدد: أول شراء موجب في النظام كله داخل الفترة | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-013 | إعادة التنشيط: لا شراء خلال N يومًا (90 افتراضيًا) ثم شراء في الفترة | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-014 | تنوع الأصناف: الأصناف المختلفة المباعة ببيع موجب | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-015 | التحصيل النسبي: تحصيل الشهر ÷ مبيعات الذمم في الشهر | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-016 | مسار المقاييس العددية بمعادلة CARD-004، والنسبية دون مسار | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-017 | هدف التحصيل: يُختار أساسه في كل هدف | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
 
 ### INV — الفواتير
 
@@ -194,10 +254,15 @@
 | INV-008 | تصدير Excel من صفحة الفواتير، مع الفصل الواضح بين نطاقين طلبهما المستخدم | [06-invoices](../10-spec/06-invoices.md)، [integration-review](../60-reference/integration-review.md) |
 | INV-009 | أضاف المستخدم Quantity، وDocumentTypeID لتوضيح هل الفاتورة نقدية أم ذمم فقط،… | [06-invoices](../10-spec/06-invoices.md) |
 | INV-010 | قدّم المستخدم الملف الجديد وطلب التأكد منه. لا تغيير لتعريف الأعمدة أو لقواعد الحساب… | [06-invoices](../10-spec/06-invoices.md) |
+| INV-011 | قيم DocumentTypeID المقبولة «فاتورة نقدي» و«فاتورة ذمم» فقط؛ غيرها خطأ يمنع الاعتماد | [2026-10-10-invoices](rounds/2026-10-10-invoices.md) |
+| INV-012 | فحص عينة فواتير واقعية 11/10 | [2026-10-11-real-samples](rounds/2026-10-11-real-samples.md) |
+| INV-013 | نتيجة فحص فواتير شهر 1/2026 | [2026-10-11-january-2026-sample](rounds/2026-10-11-january-2026-sample.md) |
+| INV-014 | فاتورة ذمم على عميل «مبيعات نقدية» تبقى دون تنبيه | [2026-10-11-january-2026-sample](rounds/2026-10-11-january-2026-sample.md) |
 
 ### MAP — الخرائط والمواقع
 
 | المعرّف | الوصف | الموضع |
+| MAP-015 | أيقونة الموقع وحفظ الإحداثيات وعدم منع الاعتماد المالي لغياب الموقع | [2026-10-07-locations-coordinates](rounds/2026-10-07-locations-coordinates.md) |
 |---|---|---|
 | MAP-001 | وحدة الخرائط تضم خمس صفحات/وجهات: «خريطة الفواتير»، «مواقع العملاء»، «المناطق… | [12-maps](../10-spec/12-maps.md) |
 | MAP-002 | نقطة لكل فاتورة بموقع إصدارها، وفلاتر التاريخ التشغيلي والمندوب ومجموعة مندوبي المبيعات… | [12-maps](../10-spec/12-maps.md) |
@@ -209,6 +274,10 @@
 | MAP-008 | تثبيت صفحة مستقلة باسم «انتشار الأصناف» داخل وحدة الخرائط، بمدخل واضح منفصل عن خريطة… | [12-maps](../10-spec/12-maps.md) |
 | MAP-009 | وافق المستخدم بعبارة «نعم اعتمد» على التصميم المعروض بعد MAP-008، بما فيه مصدر النقطة… | [12-maps](../10-spec/12-maps.md) |
 | MAP-010 | اختيار عدة مندوبيْن وأنواع الخريطة | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| MAP-011 | «غير المباعين» = عملاء النطاق الذين لم يشتروا خلال الفترة | [2026-10-10-maps](rounds/2026-10-10-maps.md) |
+| MAP-012 | لا وقت إصدار في الإصدار الأول؛ نقاط بلا مسار، والوقت في نسخة لاحقة | [2026-10-10-maps](rounds/2026-10-10-maps.md) |
+| MAP-013 | مزود الخرائط Google Maps مع حد إنفاق وتنبيه | [2026-10-10-maps](rounds/2026-10-10-maps.md) |
+| MAP-014 | خريطة الفواتير للفواتير فقط، لا نقاط مرتجعات | [2026-10-10-maps](rounds/2026-10-10-maps.md) |
 
 ### NUM — الأرقام والدقة والتقريب
 
@@ -246,6 +315,7 @@
 | PRD-004 | رقم عمولة المشرف يمثل معدلًا بالألف: 3 يعني 3‰، والحساب على أساس المبلغ المؤهل × 3 ÷ 1000. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-005 | استيراد وتصدير ملف المنتجات من صفحة المنتجات داخل وحدة البيانات. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-006 | تحديث الموجود وإضافة الجديد باستخدام كود الصنف، مع المعاينة والاعتماد. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
+| PRD-007 | عمود «عدد الحبات في الكرتونة» = عدد الباكيتات في الكرتونة؛ 1 = لا تحويل | [2026-10-10-products](rounds/2026-10-10-products.md) |
 | PRD-007 | المعاينة قبل الاعتماد | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-008 | التصدير | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 
@@ -255,16 +325,20 @@
 |---|---|---|
 | PRICE-001 | يمكن تغيير سعر الصنف في أي وقت، مع ضبط تاريخ اعتماد السعر؛ ويجوز أن يكون التاريخ ماضيًا… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md)، [integration-review](../60-reference/integration-review.md) |
 | PRICE-002 | أسعار البيع عند إعادة الاستيراد | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
+| PRICE-003 | سعر التكلفة بتاريخ سريان وسجل كسعر البيع | [2026-10-10-products](rounds/2026-10-10-products.md) |
 
 ### PRINT — الطباعة
 
 | المعرّف | الوصف | الموضع |
+| PRINT-002 | وثيقة الكشف: الترويسة وإجمالي المطلوب وحذف التواقيع والتذييل | [2026-10-07-preview-review](rounds/2026-10-07-preview-review.md) |
+| PRINT-003 | لا عمود مندوب في الكشف المطبوع؛ الترويسة كما في PRINT-002 | [2026-10-11-conflicts](rounds/2026-10-11-conflicts.md) |
 |---|---|---|
 | PRINT-001 | الطباعة من أساس التصميم | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
 
 ### QTY — الكميات
 
 | المعرّف | الوصف | الموضع |
+| QTY-004 | Quantity بالباكيت وقبول الكسور دون تقريب أو تعليق | [2026-10-07-fractional-quantities](rounds/2026-10-07-fractional-quantities.md) |
 |---|---|---|
 | QTY-001 | الكمية المحتسبة = قيمة مبيعات الصنف ÷ سعره الطبيعي بتاريخ المبيعات، وتعرض باسم «الكمية… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | QTY-002 | اعتماد مقترح الكمية المكافئة؛ يُستخدم السعر الطبيعي التاريخي للباكيت لكل من مبيعات… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md)، [integration-review](../60-reference/integration-review.md) |
@@ -282,6 +356,9 @@
 | RET-006 | إضافة Quantity للكمية المرتجعة بالباكيت، وLongitude لخط الطول وLatitude لخط العرض لموقع… | [07-returns](../10-spec/07-returns.md) |
 | RET-007 | الملف `عروض المرتجعات01-10-2026 16-05.xls`، والورقة `عروض المرتجعات01-10-2026 16-05`.… | [07-returns](../10-spec/07-returns.md) |
 | RET-008 | رفض المرتجع السالب قبل الاعتماد | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
+| RET-009 | فحص عينة مرتجعات واقعية 11/10 | [2026-10-11-real-samples](rounds/2026-10-11-real-samples.md) |
+| RET-010 | مرتجع رصيده السابق غير معلوم يعلّق حتى يعرف الرصيد | [2026-10-11-conflicts](rounds/2026-10-11-conflicts.md) |
+| RET-011 | نتيجة فحص مرتجعات شهر 1/2026 | [2026-10-11-january-2026-sample](rounds/2026-10-11-january-2026-sample.md) |
 
 ### REVIEW — المراجعات الدورية
 
@@ -315,6 +392,8 @@
 | STMT-006 | يمكن حفظ كشف مخصص باسم، مثل «كشف محامص مكاديميا - نهائي»، مع العميل والنطاق والفترة… | [09-customer-statement](../10-spec/09-customer-statement.md) |
 | STMT-007 | متطلب من تفصيل المستخدم: المعاينة والطباعة وPDF وExcel. | [09-customer-statement](../10-spec/09-customer-statement.md)، [integration-review](../60-reference/integration-review.md) |
 | STMT-008 | إلغاء الوقت من كشف حساب العميل؛ يعتمد التاريخ فقط في الشاشة والمعاينة والطباعة وPDF… | [09-customer-statement](../10-spec/09-customer-statement.md) |
+| STMT-009 | الرصيد الدائن يسدد الديون اللاحقة بالأقدم أولًا ولا يصرف نقدًا | [2026-10-10-statement](rounds/2026-10-10-statement.md) |
+| STMT-010 | الإخفاء في الكشف المخصص خاص بذلك الكشف فقط | [2026-10-10-statement](rounds/2026-10-10-statement.md) |
 
 ### TIER — الشرائح
 
@@ -350,6 +429,12 @@
 ### UX — تجربة الاستخدام
 
 | المعرّف | الوصف | الموضع |
+| UX-002 | تنظيم صفحات التقارير والتقويم والمستخدمين والإعدادات وسجل العمليات (P18–P21) | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-003 | التقارير المخصصة | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-004 | دعم الهاتف كتجربة أساسية ومقاسات الاختبار ومتصفحاته | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-005 | تنظيم صفحات الخرائط ونافذة النقطة وتجميع النقاط ونوع الخريطة | [2026-10-08-maps-ux](rounds/2026-10-08-maps-ux.md) |
+| UX-006 | عرض السند المعلّق وتصحيحه في الرفع الموحد | [2026-10-07-preview-review](rounds/2026-10-07-preview-review.md) |
+| UX-007 | اعتماد التصميم البصري للمعاينة مرجعًا لبقية الصفحات | [2026-10-11-visual-design](rounds/2026-10-11-visual-design.md) |
 |---|---|---|
 | UX-001 | كثافة منظمة ومظهر فاتح | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
 

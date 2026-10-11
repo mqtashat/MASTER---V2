@@ -7,6 +7,8 @@
 | الأولوية | تتقدم على النصوص الأقدم عند التعارض |
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [P08-receivables-cards.md](../../20-ux/pages/P08-receivables-cards.md)، [P13-performance-cards.md](../../20-ux/pages/P13-performance-cards.md) |
+| دُمج في | [P13-performance-cards.md](../../20-ux/pages/P13-performance-cards.md)، [P08-receivables-cards.md](../../20-ux/pages/P08-receivables-cards.md) — 2026-10-10 |
+| المعرّفات | **CARD-007** بطاقات الذمم: المتأخر بالأحمر وتسمية «مستقل» ونطاق المندوب؛ **CARD-008** بطاقة الأداء: صفوف الشريحة الثلاثة والألوان والإظهار والإخفاء — أُعطيت بتاريخ 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 

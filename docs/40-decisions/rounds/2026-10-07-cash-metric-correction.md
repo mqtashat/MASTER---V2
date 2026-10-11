@@ -7,6 +7,8 @@
 | الأولوية | تتقدم على النصوص الأقدم عند التعارض |
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [06-invoices.md](../../10-spec/06-invoices.md)، [P13-performance-cards.md](../../20-ux/pages/P13-performance-cards.md) |
+| دُمج في | [P13-performance-cards.md](../../20-ux/pages/P13-performance-cards.md)، [06-invoices.md](../../10-spec/06-invoices.md) — 2026-10-10 |
+| المعرّفات | **CARD-014** تعريف النقدية ببادئة «مبيعات نقدية» في اسم العميل — أُعطيت بتاريخ 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 
