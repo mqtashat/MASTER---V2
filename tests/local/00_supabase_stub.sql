@@ -55,3 +55,12 @@ $$;
 
 grant execute on function auth.uid() to anon, authenticated, service_role;
 grant usage on schema public to anon, authenticated, service_role;
+
+-- دور الاتصال الذي يستخدمه PostgREST محليًا (Supabase يوفّره تلقائيًا)
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'authenticator') then
+    create role authenticator login noinherit password 'authenticator';
+  end if;
+end $$;
+grant anon, authenticated, service_role to authenticator;

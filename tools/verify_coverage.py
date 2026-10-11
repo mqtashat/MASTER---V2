@@ -18,7 +18,7 @@ def norm(l):
 
 present = set()
 for root, dirs, files in os.walk(ROOT):
-    dirs[:] = [d for d in dirs if d != '.git']
+    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules')]
     rel = os.path.relpath(root, ROOT)
     if rel.startswith(os.path.join('docs', '80-sources')) or rel.startswith(os.path.join('docs', '90-archive')):
         continue

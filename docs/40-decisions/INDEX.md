@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-11 | [طريقة التسليم وبدء البناء — 11/10/2026](rounds/2026-10-11-build-delivery.md) | 2 |
 | 2026-10-11 | [فحص شهر 1/2026 الحقيقي — 11/10/2026](rounds/2026-10-11-january-2026-sample.md) | 5 |
 | 2026-10-11 | [هيكل المشروع والمنصة — 11/10/2026](rounds/2026-10-11-build-structure.md) | 2 |
 | 2026-10-11 | [حسم التعارضات والتفاصيل المفتوحة — 11/10/2026](rounds/2026-10-11-conflicts.md) | 5 |
@@ -82,6 +83,7 @@
 | BASE-004 | تقسيم النظام إلى وحدات البيانات والحسابات والأهداف والخرائط | [01-foundation](../10-spec/01-foundation.md) |
 | BASE-005 | هيكل المشروع: docs/ وapp/ وsupabase/ وtests/ | [2026-10-11-build-structure](rounds/2026-10-11-build-structure.md) |
 | BASE-006 | المنصة: Google AI Studio App وSupabase | [2026-10-11-build-structure](rounds/2026-10-11-build-structure.md) |
+| BASE-007 | البناء محليًا ثم التسليم ملف ZIP إلى AI Studio وربطه بـSupabase | [2026-10-11-build-delivery](rounds/2026-10-11-build-delivery.md) |
 
 ### CAL — التقويم وأيام العمل
 

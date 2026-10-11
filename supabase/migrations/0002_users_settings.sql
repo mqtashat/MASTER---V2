@@ -279,4 +279,12 @@ begin
   perform app.audit('settings', p_key, 'update', v_before, p_value);
 end $$;
 
+-- القيم الابتدائية المعتمدة:
+-- عبارة المسار لا تظهر إلا إذا فعّلتها الإدارة (CARD-006).
+-- بداية يوم الخرائط 7:00 بتوقيت الأردن، قابلة للتعديل بتاريخ سريان (B064، DAY-001).
+insert into public.settings (key, value) values
+  ('show_path_phrase', 'false'),
+  ('map_day_start', '[{"from": null, "time": "07:00"}]')
+on conflict (key) do nothing;
+
 select app.apply_grants();
