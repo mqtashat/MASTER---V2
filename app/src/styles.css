@@ -136,6 +136,21 @@ dl.kv dd { margin: 0; }
 .perm-grid td, .perm-grid th { text-align: center; }
 .perm-grid td:first-child, .perm-grid th:first-child { text-align: right; }
 
+/* الرفع الموحد: لوحة جانبية للحداثة (UPLOAD-001) */
+.side-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 12px; align-items: start; }
+.side-layout > aside { order: 2; position: sticky; top: 64px; }
+@media (max-width: 960px) { .side-layout { grid-template-columns: minmax(0, 1fr); } .side-layout > aside { order: 0; position: static; } }
+.btn.big { min-height: 48px; padding: 8px 28px; font-size: 15px; }
+.upload-buttons .btn.big { flex: 1 1 140px; justify-content: center; }
+tr.zero td { background: var(--warn-soft); }
+.diff-old { background: var(--bad-soft); }
+.diff-new { background: var(--ok-soft); }
+.edit-grid td { padding: 3px 4px; }
+.edit-grid .input { min-height: 30px; padding: 3px 6px; }
+fieldset.plain { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+fieldset.plain legend { color: var(--muted); font-size: 13px; padding: 0; margin-bottom: 4px; }
+details summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+
 @media print {
   header.top, .no-print { display: none !important; }
   body { background: #fff; }
