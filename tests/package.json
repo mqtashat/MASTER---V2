@@ -1,0 +1,11 @@
+{
+  "name": "master-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "bash local/reset_db.sh && node --test --test-concurrency=1 --test-reporter=spec db/*.test.mjs"
+  },
+  "dependencies": {
+    "pg": "8.13.1"
+  }
+}
