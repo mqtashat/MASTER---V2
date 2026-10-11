@@ -369,6 +369,48 @@ test('الصلاحيات والنطاق: لا كتابة مباشرة، والم
   } finally { await db.close(); }
 });
 
+test('B072: مستخدم بنطاق محدود لا يكتب على سندات أو موظفين خارج نطاقه بالرفع أو التعديل أو النقل أو حذف الدفعة', async () => {
+  const db = await connect();
+  try {
+    const a = await setup(db);
+    const adminBatch = (await stage(db, a, 'invoice', [inv(2), inv(3, { doc_number: '2', employee_number: '21' })])).batch_id;
+    await approveAll(db, a, adminBatch);
+    const perms = [['P05', 'view'], ['P05', 'import'], ['P05', 'approve'], ['P05', 'delete'], ['P06', 'view'], ['P06', 'edit'], ['P06', 'transfer']]
+      .map(([page, action]) => ({ page, action }));
+    const tpl = await db.rpc(a, 'admin_save_template', { p_id: null, p_name: 'مندوب برفع', p_perms: perms });
+    const [e20] = await db.sql(`select id from employees where emp_number = '20'`);
+    const [e21] = await db.sql(`select id from employees where emp_number = '21'`);
+    const u = await makeUser(db, a, { username: 'rep20b', display_name: 'مندوب', data_scope: 'self', template_id: tpl, employee_id: e20.id });
+    const [d1] = await db.sql(`select id from docs where doc_number = '1001'`);
+    const [d2] = await db.sql(`select id from docs where doc_number = '2'`);
+    const data1 = { doc_number: '1001', customer_number: '500', doc_date: '2026-10-01', employee_number: '21', pay_type: 'فاتورة ذمم',
+      lines: [{ item_number: 'A1', net_sales: '10', net_promotions: '0', quantity: '5', bonus: '0' }] };
+
+    // التعديل والنقل إلى موظف خارج النطاق
+    await rejects(db.rpc(u, 'save_doc', { p_doc: d1.id, p_data: data1, p_reason: 'x' }), 'خارج نطاق');
+    await rejects(db.rpc(u, 'transfer_docs', { p_doc_ids: [d1.id], p_employee_number: '21' }), 'خارج نطاق');
+    await rejects(db.rpc(u, 'preview_transfer', { p_doc_ids: [d1.id], p_employee_number: '21' }), 'خارج نطاق');
+
+    // رفع سند يطابق مفتاح سند موظف آخر لا يستبدله ولا ينقله
+    const b = (await stage(db, u, 'invoice', [inv(2, { doc_number: '2', net_sales: '99' })])).batch_id;
+    const res = await approveAll(db, u, b);
+    assert.match(res.skipped[0].reason, /خارج نطاق/);
+    const [d2after] = await db.sql(`select employee_id, total::text from docs where id = $1`, [d2.id]);
+    assert.equal(String(d2after.employee_id), String(e21.id));
+    assert.equal(d2after.total, '10');
+
+    // تصحيح معلق إلى موظف خارج النطاق
+    const bp = (await stage(db, u, 'invoice', [inv(2, { doc_number: '3', employee_number: '' })])).batch_id;
+    const [pend] = await items(db, bp);
+    await rejects(db.rpc(u, 'upload_fix_item', { p_item: pend.id, p_data: { ...pend.data, lines: pend.data.lines.map((l) => ({ ...l, employee_number: '21' })) } }), 'خارج نطاق');
+
+    // حذف دفعة تشمل سندات موظف آخر
+    await rejects(db.rpc(u, 'preview_delete_batch', { p_batch: adminBatch }), 'خارج نطاق');
+    await rejects(db.rpc(u, 'delete_batch', { p_batch: adminBatch, p_reason: 'x' }), 'خارج نطاق');
+    assert.equal((await docs(db)).filter((d) => d.status === 'active').length, 2);
+  } finally { await db.close(); }
+});
+
 test('INV-007: البحث والملخص لكامل النتائج، والكمية المكافئة بالسعر التاريخي أو «سعر غير متوفر»', async () => {
   const db = await connect();
   try {

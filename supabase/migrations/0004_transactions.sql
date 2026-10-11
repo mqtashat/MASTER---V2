@@ -642,6 +642,9 @@ begin
   if it.employee_id is not null and not app.can_see_employee(it.employee_id) then
     perform app.fail('forbidden', 'السند خارج نطاق بياناتك');
   end if;
+  if it.doc_id is not null and not app.can_see_employee((select employee_id from public.docs where id = it.doc_id)) then
+    perform app.fail('forbidden', 'السند المحفوظ خارج نطاق بياناتك');
+  end if;
   select kind into v_kind from public.upload_batches where id = it.batch_id;
   return jsonb_build_object('item', to_jsonb(it), 'kind', v_kind,
     'existing', case when it.doc_id is not null then app.doc_snapshot(it.doc_id) end,
@@ -654,7 +657,7 @@ end $$;
 create or replace function public.upload_fix_item(p_item bigint, p_data jsonb) returns jsonb
 language plpgsql security definer set search_path = public, app as $$
 declare
-  it public.batch_items; v_class text;
+  it public.batch_items; v_class text; v_old jsonb;
 begin
   perform app.require_perm('P05', 'approve');
   select * into it from public.batch_items where id = p_item for update;
@@ -663,9 +666,19 @@ begin
   if (select status from public.upload_batches where id = it.batch_id) = 'deleted' then
     perform app.fail('batch_deleted', 'الدفعة محذوفة');
   end if;
+  if it.employee_id is not null and not app.can_see_employee(it.employee_id) then
+    perform app.fail('forbidden', 'السند خارج نطاق بياناتك');
+  end if;
+  v_old := it.data;
   update public.batch_items set data = p_data, fixed = true where id = p_item;
   v_class := app.classify_item(p_item);
-  perform app.audit('upload_batches', it.batch_id::text, 'fix_item', it.data, p_data);
+  -- التصحيح لا ينقل السند إلى موظف أو سند محفوظ خارج النطاق (B072)
+  select * into it from public.batch_items where id = p_item;
+  if (it.employee_id is not null and not app.can_see_employee(it.employee_id))
+     or (it.doc_id is not null and not app.can_see_employee((select employee_id from public.docs where id = it.doc_id))) then
+    perform app.fail('forbidden', 'التصحيح يجعل السند خارج نطاق بياناتك');
+  end if;
+  perform app.audit('upload_batches', it.batch_id::text, 'fix_item', v_old, p_data);
   return jsonb_build_object('class', v_class, 'summary', app.batch_summary(it.batch_id));
 end $$;
 
@@ -698,7 +711,10 @@ begin
   for dcs in select value from jsonb_array_elements(coalesce(p_decisions, '[]')) loop
     select * into it from public.batch_items where id = (dcs->>'id')::bigint and batch_id = p_batch for update;
     if not found or it.outcome is not null then continue; end if;   -- قرار سابق: لا تكرار (إعادة المحاولة بعد الانقطاع)
-    if it.employee_id is not null and not app.can_see_employee(it.employee_id) then continue; end if;
+    if (it.employee_id is not null and not app.can_see_employee(it.employee_id))
+       or (it.doc_id is not null and not app.can_see_employee((select employee_id from public.docs where id = it.doc_id))) then
+      v_skipped := v_skipped || jsonb_build_object('id', it.id, 'reason', 'السند خارج نطاق بياناتك'); continue;
+    end if;
     v_act := dcs->>'action';
     if v_act = 'exclude' then
       update public.batch_items set outcome = 'excluded', decided_at = now(), decided_by = auth.uid() where id = it.id;
@@ -707,6 +723,9 @@ begin
     -- إعادة الفحص على البيانات الحالية قبل التنفيذ (DATA-005)
     v_class := app.classify_item(it.id);
     select * into it from public.batch_items where id = it.id;
+    if it.doc_id is not null and not app.can_see_employee((select employee_id from public.docs where id = it.doc_id)) then
+      v_skipped := v_skipped || jsonb_build_object('id', it.id, 'reason', 'السند خارج نطاق بياناتك'); continue;
+    end if;
     v_outcome := null; v_doc := it.doc_id; v_norm := it.norm;
     if coalesce((dcs->>'drop_duplicates')::boolean, false) and b.kind <> 'collection' then
       v_norm := app.drop_dup_lines(v_norm);
@@ -786,10 +805,24 @@ language sql stable security definer set search_path = public as $$
     'revert_total', (select coalesce(sum(doc_total), 0) from x where act = 'revert'))
 $$;
 
+-- حذف الدفعة يمس كل سنداتها، فيلزم أن تكون كلها ضمن نطاق المستخدم (B072)
+create or replace function app.require_batch_scope(p_batch bigint) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if app.scope_is_all() then return; end if;
+  if exists (select 1 from public.batch_items i left join public.docs d on d.id = i.doc_id
+              where i.batch_id = p_batch
+                and ((i.employee_id is not null and not app.can_see_employee(i.employee_id))
+                     or (d.id is not null and not app.can_see_employee(d.employee_id)))) then
+    perform app.fail('forbidden', 'الدفعة تشمل سندات خارج نطاق بياناتك؛ يحذفها من يملك نطاقها كاملًا');
+  end if;
+end $$;
+
 create or replace function public.preview_delete_batch(p_batch bigint) returns jsonb
 language plpgsql stable security definer set search_path = public, app as $$
 begin
   perform app.require_perm('P05', 'delete');
+  perform app.require_batch_scope(p_batch);
   if (select status from public.upload_batches where id = p_batch) = 'deleted' then
     perform app.fail('batch_deleted', 'الدفعة محذوفة مسبقًا');
   end if;
@@ -808,6 +841,7 @@ begin
   if (select status from public.upload_batches where id = p_batch) = 'deleted' then
     perform app.fail('batch_deleted', 'الدفعة محذوفة مسبقًا');
   end if;
+  perform app.require_batch_scope(p_batch);
   v_plan := app.batch_delete_plan(p_batch);
   select array_agg(d.doc_date) into v_dates from public.docs d
    where d.id in (select (e->>'doc_id')::bigint from jsonb_array_elements((v_plan->'remove') || (v_plan->'revert')) e);
@@ -867,6 +901,12 @@ begin
     perform app.fail('invalid_doc', v_msg);
   end if;
   v_norm := v->'norm';
+  if (select id from public.employees where emp_number = v_norm->>'employee_number') is distinct from d.employee_id then
+    perform app.require_perm('P06', 'transfer');
+    if not app.can_see_employee((select id from public.employees where emp_number = v_norm->>'employee_number')) then
+      perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك');
+    end if;
+  end if;
   if d.kind = 'invoice' and v_norm->>'pay_type' is null then
     perform app.fail('invalid_doc', 'نوع الفاتورة مطلوب: «فاتورة نقدي» أو «فاتورة ذمم»');
   end if;
@@ -894,6 +934,7 @@ begin
   perform app.require_perm('P06', 'transfer');
   select * into v_emp from public.employees where emp_number = trim(p_employee_number);
   if not found then perform app.fail('unknown_employee', 'موظف غير معرّف: ' || coalesce(p_employee_number, '')); end if;
+  if not app.can_see_employee(v_emp.id) then perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك'); end if;
   return (
     select jsonb_build_object(
       'to', jsonb_build_object('emp_number', v_emp.emp_number, 'name', v_emp.name),
@@ -918,6 +959,7 @@ begin
   perform app.require_perm('P06', 'transfer');
   select * into v_emp from public.employees where emp_number = trim(p_employee_number);
   if not found then perform app.fail('unknown_employee', 'موظف غير معرّف: ' || coalesce(p_employee_number, '')); end if;
+  if not app.can_see_employee(v_emp.id) then perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك'); end if;
   perform app.guard_dates((select array_agg(doc_date) from public.docs where id = any(p_ids) and status = 'active'), p_code);
   for d in select * from public.docs where id = any(p_ids) and status = 'active' order by id for update loop
     if not app.can_see_employee(d.employee_id) then perform app.fail('forbidden', 'سند خارج نطاق بياناتك: ' || d.doc_number); end if;
