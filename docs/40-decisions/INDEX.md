@@ -90,6 +90,14 @@
 ### CARD — بطاقات الأداء والذمم
 
 | المعرّف | الوصف | الموضع |
+| CARD-007 | بطاقات الذمم: المتأخر بالأحمر وتسمية «مستقل» ونطاق المندوب | [2026-10-07-receivables-performance-cards](rounds/2026-10-07-receivables-performance-cards.md) |
+| CARD-008 | بطاقة الأداء: صفوف الشريحة الثلاثة والألوان والإظهار والإخفاء | [2026-10-07-receivables-performance-cards](rounds/2026-10-07-receivables-performance-cards.md) |
+| CARD-009 | شريط ملخص الأداء في سطر أفقي واحد | [2026-10-07-performance-summary-bar](rounds/2026-10-07-performance-summary-bar.md) |
+| CARD-010 | بطاقات A وB وC المتجاورة وإخفاء X والأعداد الصحيحة | [2026-10-07-performance-goal-tiles](rounds/2026-10-07-performance-goal-tiles.md) |
+| CARD-011 | تقليل المسافات الرأسية في بطاقة الأداء | [2026-10-07-performance-card-compact](rounds/2026-10-07-performance-card-compact.md) |
+| CARD-012 | عمود عمر الذمة وتسمية «افتتاحي» ومحتوى البطاقتين وفق المراجع المصورة | [2026-10-07-cards-image-references](rounds/2026-10-07-cards-image-references.md) |
+| CARD-013 | نسبة النقدية وقيم DocumentTypeID النصية | [2026-10-07-cash-indicator-source-check](rounds/2026-10-07-cash-indicator-source-check.md) |
+| CARD-014 | تعريف النقدية ببادئة «مبيعات نقدية» في اسم العميل | [2026-10-07-cash-metric-correction](rounds/2026-10-07-cash-metric-correction.md) |
 |---|---|---|
 | CARD-001 | «بطاقات أداء الموظفين» صفحة مستقلة بمدخل في الشريط الجانبي ضمن وظائف وحدة الأهداف.… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 | CARD-002 | حفظ البطاقة نفسها كصورة بالحالة المعروضة والفترة وتاريخ القطع والأقسام الظاهرة، بكامل… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
@@ -228,6 +236,7 @@
 ### MAP — الخرائط والمواقع
 
 | المعرّف | الوصف | الموضع |
+| MAP-015 | أيقونة الموقع وحفظ الإحداثيات وعدم منع الاعتماد المالي لغياب الموقع | [2026-10-07-locations-coordinates](rounds/2026-10-07-locations-coordinates.md) |
 |---|---|---|
 | MAP-001 | وحدة الخرائط تضم خمس صفحات/وجهات: «خريطة الفواتير»، «مواقع العملاء»، «المناطق… | [12-maps](../10-spec/12-maps.md) |
 | MAP-002 | نقطة لكل فاتورة بموقع إصدارها، وفلاتر التاريخ التشغيلي والمندوب ومجموعة مندوبي المبيعات… | [12-maps](../10-spec/12-maps.md) |
@@ -295,12 +304,14 @@
 ### PRINT — الطباعة
 
 | المعرّف | الوصف | الموضع |
+| PRINT-002 | وثيقة الكشف: الترويسة وإجمالي المطلوب وحذف التواقيع والتذييل | [2026-10-07-preview-review](rounds/2026-10-07-preview-review.md) |
 |---|---|---|
 | PRINT-001 | الطباعة من أساس التصميم | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
 
 ### QTY — الكميات
 
 | المعرّف | الوصف | الموضع |
+| QTY-004 | Quantity بالباكيت وقبول الكسور دون تقريب أو تعليق | [2026-10-07-fractional-quantities](rounds/2026-10-07-fractional-quantities.md) |
 |---|---|---|
 | QTY-001 | الكمية المحتسبة = قيمة مبيعات الصنف ÷ سعره الطبيعي بتاريخ المبيعات، وتعرض باسم «الكمية… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | QTY-002 | اعتماد مقترح الكمية المكافئة؛ يُستخدم السعر الطبيعي التاريخي للباكيت لكل من مبيعات… | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md)، [integration-review](../60-reference/integration-review.md) |
@@ -388,6 +399,11 @@
 ### UX — تجربة الاستخدام
 
 | المعرّف | الوصف | الموضع |
+| UX-002 | تنظيم صفحات التقارير والتقويم والمستخدمين والإعدادات وسجل العمليات (P18–P21) | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-003 | التقارير المخصصة | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-004 | دعم الهاتف كتجربة أساسية ومقاسات الاختبار ومتصفحاته | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
+| UX-005 | تنظيم صفحات الخرائط ونافذة النقطة وتجميع النقاط ونوع الخريطة | [2026-10-08-maps-ux](rounds/2026-10-08-maps-ux.md) |
+| UX-006 | عرض السند المعلّق وتصحيحه في الرفع الموحد | [2026-10-07-preview-review](rounds/2026-10-07-preview-review.md) |
 |---|---|---|
 | UX-001 | كثافة منظمة ومظهر فاتح | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |
 

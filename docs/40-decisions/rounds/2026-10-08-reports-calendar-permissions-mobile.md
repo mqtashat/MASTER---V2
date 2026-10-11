@@ -8,6 +8,7 @@
 | المصدر الأصلي | `docs/MASTER-SPEC.md` (رأس الملف) |
 | الملفات المتأثرة | [design-principles.md](../../20-ux/design-principles.md)، [P18-reports.md](../../20-ux/pages/P18-reports.md)، [P19-calendar.md](../../20-ux/pages/P19-calendar.md)، [P20-users-permissions.md](../../20-ux/pages/P20-users-permissions.md)، [P21-settings-audit-log.md](../../20-ux/pages/P21-settings-audit-log.md)، [acceptance-cases.md](../../30-validation/acceptance-cases.md) |
 | دُمج في | [P18-reports.md](../../20-ux/pages/P18-reports.md) (التقارير المخصصة)، [design-principles.md](../../20-ux/design-principles.md) (الهاتف)؛ حالات القبول في المرحلة 2 — 2026-10-10 |
+| المعرّفات | **UX-002** تنظيم صفحات التقارير والتقويم والمستخدمين والإعدادات وسجل العمليات (P18–P21)؛ **UX-003** التقارير المخصصة؛ **UX-004** دعم الهاتف كتجربة أساسية ومقاسات الاختبار ومتصفحاته — أُعطيت بتاريخ 2026-10-10 |
 
 > النص أدناه منقول حرفيًا من المرجع الأصلي دون تعديل في الصياغة.
 
