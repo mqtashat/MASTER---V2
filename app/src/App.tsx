@@ -12,6 +12,8 @@ import { Employees } from './pages/Employees';
 import { Products } from './pages/Products';
 import { Users } from './pages/Users';
 import { Settings } from './pages/Settings';
+import { Upload } from './pages/Upload';
+import { Transactions } from './pages/Transactions';
 import { rpc } from './lib/supabase';
 
 export function App() {
@@ -41,7 +43,7 @@ function Gate() {
 }
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
-  P01: Home, P02: Customers, P03: Employees, P04: Products, P20: Users, P21: Settings,
+  P01: Home, P02: Customers, P03: Employees, P04: Products, P05: Upload, P06: Transactions, P20: Users, P21: Settings,
 };
 
 function Shell() {
