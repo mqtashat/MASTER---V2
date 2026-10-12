@@ -10,7 +10,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LINK = re.compile(r'\]\(([^)#\s]+)(?:#[^)]*)?\)')
 bad = 0; total = 0
 for root, dirs, files in os.walk(ROOT):
-    dirs[:] = [d for d in dirs if d != '.git' and not os.path.join(root, d).endswith(os.path.join('docs', '90-archive'))]
+    # node_modules تبعيات خارجية غير متتبعة في git
+    dirs[:] = [d for d in dirs if d not in ('.git', 'node_modules') and not os.path.join(root, d).endswith(os.path.join('docs', '90-archive'))]
     for f in files:
         if not f.endswith('.md'): continue
         p = os.path.join(root, f)
