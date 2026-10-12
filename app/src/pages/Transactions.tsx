@@ -46,6 +46,12 @@ export function Transactions() {
   const selAll = useAction();
 
   useEffect(() => { setFilters({}); setSelected(new Set()); setOpen(null); }, [kind]);
+  // فتح سند من رابط (كشف الحساب والذمم): ?kind=…&open=ID
+  useEffect(() => {
+    const id = Number(params.get('open'));
+    if (id) { setOpen(id); setParams({ kind }, { replace: true }); }
+  }, [params, kind, setParams]);
+  const [classes, setClasses] = useState<Record<number, string>>({});
   const setF = (k: string, v: string) => { setFilters((o) => ({ ...o, [k]: v })); setSelected(new Set()); };
   const k = kindDef(kind);
   const isCol = kind === 'collection';
@@ -86,12 +92,12 @@ export function Transactions() {
       if (kind === 'invoice') c.push({ key: 'has_location', label: 'الموقع', render: (r) => (r.has_location
         ? <a href={`https://www.google.com/maps?q=${r.lat},${r.lng}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>فتح</a>
         : <span className="muted small">غير متوفر</span>) });
-      if (kind === 'return') c.push({ key: 'class', label: 'التصنيف المالي', render: () => <span className="muted small">مع وحدة الحسابات</span> });
+      if (kind === 'return') c.push({ key: 'class', label: 'التصنيف المالي', render: (r) => <ReturnClass cls={classes[r.id]} /> });
     }
     c.push({ key: 'manual_edit', label: '', render: (r) => (r.manual_edit ? <Badge kind="accent">معدل يدويًا</Badge> : null) });
     return c;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind, selected, can]);
+  }, [kind, selected, can, classes]);
 
   return (
     <>
@@ -164,6 +170,9 @@ export function Transactions() {
         fetcher={async (q) => {
           const r = await search(kind, filters, q.sort, q.asc, q.page * q.pageSize, q.pageSize);
           setSummary(r.summary); setPageRows(r.rows);
+          if (kind === 'return' && r.rows.length) {
+            rpc<Record<number, string>>('return_classes_for', { p_doc_ids: r.rows.map((x) => x.id) }).then(setClasses).catch(() => setClasses({}));
+          }
           return { rows: r.rows, count: r.summary.count };
         }} />
       {open && <DocFile id={open} kind={kind} onClose={() => setOpen(null)} onChanged={() => setVer(ver + 1)} onTransfer={(id) => setTransfer([id])} />}
@@ -171,6 +180,14 @@ export function Transactions() {
       {exporting && <ExportModal kind={kind} pageRows={pageRows} onClose={() => setExporting(false)} />}
     </>
   );
+}
+
+// تصنيف المرتجع نقديًا أو ذممًا وفق الرصيد السابق (RET-005)
+function ReturnClass({ cls }: { cls?: string }) {
+  if (cls === 'credit') return <Badge kind="accent">ذمم</Badge>;
+  if (cls === 'cash') return <Badge>نقدي</Badge>;
+  if (cls === 'unknown') return <Badge kind="warn">غير مصنف</Badge>;
+  return <span className="muted small">—</span>;
 }
 
 // ---------------------------------------------------------------------

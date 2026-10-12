@@ -2,13 +2,15 @@
 import { useEffect, useState } from 'react';
 import { sb, rpc } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
-import { fmtDate, todayIso } from '../lib/format';
+import { Link } from 'react-router-dom';
+import { fmtAmount, fmtDate, todayIso } from '../lib/format';
 import { fetchAll, cleanTerm } from '../lib/query';
 import { writeSheet } from '../lib/excel';
 import { DataTable, Column } from '../components/DataTable';
 import { Drawer, Field, Modal, Msg, Badge, useAction, useGuarded } from '../components/ui';
 import { ImportWizard, ChangesTable, Counts, PlanError } from '../components/ImportWizard';
 import { AuditList } from './Settings';
+import { EditOpening } from './Openings';
 
 export interface CustomerRow {
   id: number; customer_number: string; name: string; company_id: string | null; grace_days: number | null;
@@ -141,7 +143,7 @@ function CustomerFile({ id, onClose, onChanged }: { id: number; onClose: () => v
     <Drawer title={row ? `${row.customer_number} — ${row.name}` : 'ملف العميل'} onClose={onClose}
       actions={row && can('P02', 'edit') && <button className="btn" onClick={() => setEditing(true)}>تعديل</button>}>
       <div className="tabs" role="tablist">
-        {[['def', 'التعريف'], ['branches', 'الفروع والرئيسي'], ['location', 'الموقع'], ['log', 'سجل التعديلات']].map(([k, l]) => (
+        {[['def', 'التعريف'], ['branches', 'الفروع والرئيسي'], ['account', 'الحساب'], ['location', 'الموقع'], ['log', 'سجل التعديلات']].map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}>{l}</button>
         ))}
       </div>
@@ -156,10 +158,10 @@ function CustomerFile({ id, onClose, onChanged }: { id: number; onClose: () => v
             <dt>فترة السماح</dt><dd><span className="num">{row.effective_grace_days}</span> يوم {row.grace_days === null && <span className="muted">(الافتراضي)</span>}</dd>
             <dt>CompanyID</dt><dd>{row.company_id ?? '—'} <span className="muted small">غير مفعّل</span></dd>
           </dl>
-          <p className="small muted" style={{ marginTop: 10 }}>الحركات وكشف الحساب وشروط التسديد تُضاف إلى ملف العميل مع وحدتي الحركات والحسابات.</p>
         </div>
       )}
       {row && tab === 'branches' && <BranchesTab row={row} branches={branches} links={links} onChanged={changed} />}
+      {row && tab === 'account' && <AccountTab row={row} />}
       {row && tab === 'location' && <LocationTab row={row} onChanged={changed} />}
       {tab === 'log' && <AuditList entity="customers" entityId={String(id)} />}
       {editing && row && <CustomerForm row={row} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); changed(); }} />}
@@ -302,3 +304,105 @@ const customerImportSpec = {
     </>
   ),
 };
+
+// ---------------------------------------------------------------------
+// الحساب من ملف العميل: الأرصدة الافتتاحية بسنواتها (FIN-003) وسياسة توزيع التحصيل (B031، ALLOC-002)
+// ---------------------------------------------------------------------
+interface Opening { year: number; debit: string; credit: string; source: string; updated_at: string }
+interface Policy { id: number; valid_from: string; branch_mode: 'branch' | 'family'; include_master: boolean; reason: string | null }
+
+function AccountTab({ row }: { row: CustomerRow }) {
+  const { can } = useAuth();
+  const [openings, setOpenings] = useState<Opening[]>([]);
+  const [policies, setPolicies] = useState<Policy[]>([]);
+  const [edit, setEdit] = useState<number | null>(null);
+  const [policy, setPolicy] = useState(false);
+  const [ver, setVer] = useState(0);
+  const year = Number(todayIso().slice(0, 4));
+  useEffect(() => {
+    sb().from('opening_balances').select('year, debit, credit, source, updated_at').eq('customer_id', row.id).order('year', { ascending: false })
+      .then(({ data }) => setOpenings((data ?? []) as Opening[]));
+    sb().from('customer_alloc_policies').select('id, valid_from, branch_mode, include_master, reason').eq('customer_id', row.id).order('valid_from', { ascending: false })
+      .then(({ data }) => setPolicies((data ?? []) as Policy[]));
+  }, [row.id, ver]);
+  const cur = openings.find((o) => o.year === edit);
+  const isBranch = row.kind === 'فرع';
+  const mode = (p?: Policy) => (isBranch
+    ? (p?.branch_mode ?? 'branch') === 'branch' ? 'تحصيله يسدد ديونه فقط' : 'تحصيله يوزع على جميع فروع العائلة'
+    : (p?.include_master ?? true) ? 'ديونه تدخل توزيع تحصيله مع الفروع' : 'تحصيله يوزع على الفروع دون ديونه');
+  return (
+    <>
+      <div className="panel">
+        <div className="page-head"><h3>كشف الحساب</h3>
+          <div className="actions">
+            {can('P07') && <Link className="btn" to={`/statement?customer=${row.id}`}>هذا الحساب</Link>}
+            {can('P07') && row.kind !== 'مستقل' && <Link className="btn" to={`/statement?customer=${row.id}&family=1`}>العائلة كاملة</Link>}
+          </div>
+        </div>
+      </div>
+      {can('P08a') && (
+        <div className="panel">
+          <div className="page-head"><h3>الأرصدة الافتتاحية</h3>
+            {(can('P08a', 'add') || can('P08a', 'edit')) && (
+              <select className="input" style={{ width: 'auto' }} value="" aria-label="إضافة أو تعديل افتتاح سنة" onChange={(e) => setEdit(Number(e.target.value))}>
+                <option value="">إضافة/تعديل افتتاح سنة…</option>
+                {[year + 1, year, year - 1].filter((y) => y >= 2026).map((y) => <option key={y} value={y}>{y}</option>)}
+              </select>
+            )}
+          </div>
+          {openings.length === 0 ? <p className="small muted">لا افتتاحي مسجل؛ افتتاح 2026 صفر معتمد.</p> : (
+            <div className="tbl"><table><thead><tr><th>السنة</th><th className="num">مدين</th><th className="num">دائن</th><th>المصدر</th></tr></thead>
+              <tbody>{openings.map((o) => (
+                <tr key={o.year}><td className="num">{o.year}</td><td className="num">{fmtAmount(o.debit)}</td><td className="num">{fmtAmount(o.credit)}</td>
+                  <td>{{ manual: 'يدوي', import: 'استيراد', carry: 'ترحيل الإغلاق' }[o.source]}</td></tr>
+              ))}</tbody></table></div>
+          )}
+        </div>
+      )}
+      {row.kind !== 'مستقل' && (
+        <div className="panel">
+          <div className="page-head"><h3>سياسة توزيع التحصيل</h3>
+            {can('P02', 'edit') && <button className="btn" onClick={() => setPolicy(true)}>تغيير من تاريخ</button>}</div>
+          <p className="small">الحالية: <strong>{mode(policies.find((p) => p.valid_from <= todayIso()))}</strong>{!policies.length && <span className="muted"> (الافتراضي)</span>}</p>
+          {policies.length > 0 && (
+            <div className="tbl"><table><thead><tr><th>ساري من</th><th>السياسة</th><th>السبب</th></tr></thead>
+              <tbody>{policies.map((p) => <tr key={p.id}><td className="num">{fmtDate(p.valid_from)}</td><td>{mode(p)}</td><td>{p.reason}</td></tr>)}</tbody></table></div>
+          )}
+        </div>
+      )}
+      {edit && <EditOpening row={{ customer_id: row.id, customer_number: row.customer_number, name: row.name, debit: cur?.debit ?? null, credit: cur?.credit ?? null }}
+        year={edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); setVer(ver + 1); }} />}
+      {policy && <PolicyForm row={row} isBranch={isBranch} onClose={() => setPolicy(false)} onDone={() => { setPolicy(false); setVer(ver + 1); }} />}
+    </>
+  );
+}
+
+function PolicyForm({ row, isBranch, onClose, onDone }: { row: CustomerRow; isBranch: boolean; onClose: () => void; onDone: () => void }) {
+  const [from, setFrom] = useState(`${todayIso().slice(0, 4)}-01-01`);
+  const [mode, setMode] = useState<'branch' | 'family'>('branch');
+  const [inc, setInc] = useState(true);
+  const [reason, setReason] = useState('');
+  const { busy, error, run } = useAction();
+  const guarded = useGuarded();
+  const save = () => run(async () => {
+    await guarded((code) => rpc('set_alloc_policy', { p_customer: row.id, p_valid_from: from, p_branch_mode: mode, p_include_master: inc, p_reason: reason || null, p_code: code }));
+    onDone();
+  });
+  return (
+    <Modal title={`سياسة توزيع التحصيل — ${row.customer_number}`} onClose={onClose} footer={<>
+      <button className="btn primary" disabled={busy || !from} onClick={save}>اعتماد</button><button className="btn" onClick={onClose}>إلغاء</button></>}>
+      <Msg>تطبق من التاريخ المختار على السنة الحالية كاملة أو جزء منها؛ السنوات المغلقة لا تتغير (B031). الزائد يبقى دائنًا يسدد الديون اللاحقة.</Msg>
+      <Field label="ساري من" hint={`${todayIso().slice(0, 4)}-01-01 = السنة الحالية كاملة`}><input type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></Field>
+      {isBranch ? (
+        <fieldset className="plain"><legend>تحصيل هذا الفرع</legend>
+          <label><input type="radio" checked={mode === 'branch'} onChange={() => setMode('branch')} /> يسدد ديون الفرع فقط</label>
+          <label><input type="radio" checked={mode === 'family'} onChange={() => setMode('family')} /> يوزع على جميع فروع العائلة بالأقدم أولًا</label>
+        </fieldset>
+      ) : (
+        <label><input type="checkbox" checked={inc} onChange={(e) => setInc(e.target.checked)} /> ديون الرئيسي نفسه تدخل توزيع تحصيله مع الفروع (ALLOC-002)</label>
+      )}
+      <Field label="السبب (اختياري)"><input value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      {error && <Msg kind="bad">{error}</Msg>}
+    </Modal>
+  );
+}

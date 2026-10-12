@@ -24,6 +24,21 @@
 
 insert into public.settings (key, value) values ('accounts_start_year', '2026') on conflict (key) do nothing;
 
+-- سنة بدء الأرصدة إعداد مالي للإدارة وحدها
+create or replace function public.save_setting(p_key text, p_value jsonb) returns void
+language plpgsql security definer set search_path = public, app as $$
+declare
+  v_before jsonb;
+begin
+  perform app.require_perm('P21', 'edit');
+  -- إعدادات الإدارة الخاصة (CARD-006، MAP-013، FIN-002) للإدارة وحدها
+  if p_key in ('show_path_phrase', 'maps_spend_limit', 'accounts_start_year') then perform app.require_admin(); end if;
+  select value into v_before from public.settings where key = p_key;
+  insert into public.settings (key, value, updated_at, updated_by) values (p_key, p_value, now(), auth.uid())
+  on conflict (key) do update set value = excluded.value, updated_at = now(), updated_by = auth.uid();
+  perform app.audit('settings', p_key, 'update', v_before, p_value);
+end $$;
+
 -- سنة بدء الأرصدة: افتتاحها صفر معتمد (FIN-002)
 create or replace function app.start_year() returns int
 language sql stable security definer set search_path = public as $$
@@ -1136,6 +1151,18 @@ begin
       order by d.doc_date, d.id), '[]')
     from app.ledger_reclass r join public.docs d on d.id = r.doc_id join public.customers c on c.id = d.customer_id
    where d.status = 'active' and app.can_see_employee(d.employee_id));
+end $$;
+
+-- تصنيف مرتجعات صفحة السندات بعد تحديث المتأثر
+create or replace function public.return_classes_for(p_doc_ids jsonb) returns jsonb
+language plpgsql security definer set search_path = public, app as $$
+begin
+  perform app.require_perm('P06', 'view');
+  perform app.refresh_ledger();
+  return (select coalesce(jsonb_object_agg(r.doc_id, r.class), '{}')
+    from public.return_classes r join public.docs d on d.id = r.doc_id
+   where r.doc_id in (select value::bigint from jsonb_array_elements_text(coalesce(p_doc_ids, '[]')))
+     and app.can_see_employee(d.employee_id));
 end $$;
 
 create or replace function public.approve_return_reclass(p_doc_ids jsonb, p_code text default null) returns int
