@@ -275,6 +275,15 @@ begin
   return false;
 end $$;
 
+-- دوال الكتابة لا تمس موظفًا خارج نطاق المستخدم (B072)
+create or replace function app.require_employee_scope(p_employee bigint) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if not app.can_see_employee(p_employee) then
+    perform app.fail('out_of_scope', 'هذا الموظف خارج نطاق بياناتك');
+  end if;
+end $$;
+
 create or replace function app.scope_is_all() returns boolean
 language sql stable security definer set search_path = public, app as $$
   select coalesce((select u.is_admin or u.data_scope = 'all'

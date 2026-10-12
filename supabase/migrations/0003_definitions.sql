@@ -111,6 +111,15 @@ language sql stable security definer set search_path = public, app as $$
                   where l.customer_id = p_customer and app.can_see_employee(l.employee_id))
 $$;
 
+-- دوال الكتابة لا تمس عميلًا خارج نطاق المستخدم (B072)
+create or replace function app.require_customer_scope(p_customer bigint) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if not app.can_see_customer(p_customer) then
+    perform app.fail('out_of_scope', 'هذا العميل خارج نطاق بياناتك');
+  end if;
+end $$;
+
 -- =====================================================================
 -- المنتجات
 -- =====================================================================
@@ -297,6 +306,7 @@ begin
       values (v_id, (p->>'supervisor_id')::bigint, null);
     end if;
   else
+    perform app.require_employee_scope(v_id);
     v_before := app.employee_json(v_id);
     update public.employees set emp_number = v_num, name = v_name, job_role = nullif(trim(p->>'job_role'), ''),
            updated_at = now() where id = v_id;
@@ -315,6 +325,7 @@ declare
   v_before jsonb := app.employee_json(p_employee);
 begin
   perform app.require_perm('P03', 'edit');
+  perform app.require_employee_scope(p_employee);
   if p_status not in ('مستقيل', 'موقوف') then perform app.fail('bad_status', 'الحالة يجب أن تكون مستقيل أو موقوف'); end if;
   select * into v_period from public.employment_periods where employee_id = p_employee and end_date is null;
   if not found then perform app.fail('no_open_period', 'لا توجد فترة عمل مفتوحة لهذا الموظف'); end if;
@@ -338,6 +349,7 @@ declare
   v_before jsonb := app.employee_json(p_employee);
 begin
   perform app.require_perm('P03', 'edit');
+  perform app.require_employee_scope(p_employee);
   if exists (select 1 from public.employment_periods where employee_id = p_employee and end_date is null) then
     perform app.fail('already_active', 'للموظف فترة عمل مفتوحة');
   end if;
@@ -362,6 +374,7 @@ begin
   if coalesce(trim(p_reason), '') = '' then perform app.fail('reason_required', 'سبب التصحيح مطلوب'); end if;
   select * into v from public.employment_periods where id = p_period;
   if not found then perform app.fail('not_found', 'الفترة غير موجودة'); end if;
+  perform app.require_employee_scope(v.employee_id);
   if p_end is not null and p_end < p_start then perform app.fail('end_before_start', 'النهاية تسبق البداية'); end if;
   if exists (select 1 from public.employment_periods o
               where o.employee_id = v.employee_id and o.id <> v.id
@@ -433,6 +446,7 @@ declare
   v_cut date := case when p_move_prior then p_move_from else p_effective end;
 begin
   perform app.require_perm('P03', 'transfer');
+  perform app.require_employee_scope(p_employee);
   if p_effective is null then perform app.fail('required', 'تاريخ السريان مطلوب'); end if;
   perform app.guard_dates(array[app.first_closed_in(v_cut, app.today())], p_code);
   perform app.apply_supervisor_change(p_employee, p_new_supervisor, p_effective, p_move_prior, p_move_from, p_reason);
@@ -720,6 +734,7 @@ begin
       insert into public.customer_master_links (customer_id, master_id, valid_from) values (v_id, v_master, null);
     end if;
   else
+    perform app.require_customer_scope(v_id);
     v_before := app.customer_json(v_id);
     update public.customers set customer_number = v_num, name = v_name,
            company_id = nullif(trim(p->>'company_id'), ''), grace_days = v_grace::int, updated_at = now()
@@ -770,6 +785,7 @@ declare
   v_master bigint;
 begin
   perform app.require_perm('P02', 'edit');
+  perform app.require_customer_scope(p_customer);
   if p_effective is null then perform app.fail('required', 'تاريخ السريان مطلوب'); end if;
   if nullif(trim(p_master_number), '') is not null then
     select id into v_master from public.customers where customer_number = trim(p_master_number);
@@ -789,6 +805,7 @@ begin
   if not (app.has_perm('P16', 'edit') or app.has_perm('P02', 'edit')) then
     perform app.fail('forbidden', 'لا تملك صلاحية هذا الإجراء');
   end if;
+  perform app.require_customer_scope(p_customer);
   if (p_lat is null) <> (p_lng is null) then perform app.fail('bad_location', 'خط العرض وخط الطول معًا أو لا شيء'); end if;
   if p_lat is not null and (p_lat not between -90 and 90 or p_lng not between -180 and 180) then
     perform app.fail('bad_location', 'إحداثيات خارج النطاق');
@@ -1191,6 +1208,13 @@ begin
       or exists (select 1 from jsonb_array_elements(v_plan->'new') n where n->'values' ? 'cost'))
      and not app.has_perm('P04', 'view_cost') then
     perform app.fail('forbidden', 'الملف يغير سعر التكلفة ولا تملك صلاحيته');
+  end if;
+  if (exists (select 1 from jsonb_array_elements(v_plan->'changed') c, jsonb_object_keys(c->'fields') k2
+               where k2 not in ('name', 'sale', 'cost', 'packing'))
+      or exists (select 1 from jsonb_array_elements(v_plan->'new') n, jsonb_object_keys(n->'values') k2
+                  where k2 not in ('sale', 'cost', 'packing')))
+     and not app.has_perm('P04', 'view_commission') then
+    perform app.fail('forbidden', 'الملف يغير نسب العمولة ولا تملك صلاحيتها');
   end if;
   foreach k in array array['sale', 'cost', 'packing', 'rates'] loop
     d := app.to_date(p_dates->>k);

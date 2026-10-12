@@ -278,6 +278,15 @@ begin
   return false;
 end $$;
 
+-- دوال الكتابة لا تمس موظفًا خارج نطاق المستخدم (B072)
+create or replace function app.require_employee_scope(p_employee bigint) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if not app.can_see_employee(p_employee) then
+    perform app.fail('out_of_scope', 'هذا الموظف خارج نطاق بياناتك');
+  end if;
+end $$;
+
 create or replace function app.scope_is_all() returns boolean
 language sql stable security definer set search_path = public, app as $$
   select coalesce((select u.is_admin or u.data_scope = 'all'
@@ -565,6 +574,42 @@ language sql stable security definer set search_path = public as $$
   from public.app_users u where u.id = p_id
 $$;
 
+-- هل يملك الحساب ما لا يملكه المستخدم الحالي: صلاحيةً أو موظفًا خارج نطاقه؟
+-- غير الإدارة لا يدير حسابًا فوقه ولا يمنح أكثر مما يملك (B073، AUTH-002).
+create or replace function app.exceeds_caller(p_user uuid) returns boolean
+language plpgsql stable security definer set search_path = public, app as $$
+declare
+  t public.app_users;
+begin
+  if app.is_admin() then return false; end if;
+  select * into t from public.app_users where id = p_user;
+  if not found then return false; end if;
+  if t.is_admin then return true; end if;
+  if exists (select 1 from public.pages p, unnest(p.actions) a
+              where app.granted(t.id, p.code, 'view') and (a = 'view' or app.granted(t.id, p.code, a))
+                and not app.has_perm(p.code, a)) then
+    return true;
+  end if;
+  if app.scope_is_all() then return false; end if;
+  if t.data_scope = 'all' then return true; end if;
+  return exists (
+    select 1 from (
+      select t.employee_id as e
+      union all select s.employee_id from public.supervisor_assignments s
+                 where t.data_scope = 'team' and s.supervisor_id = t.employee_id
+      union all select x.employee_id from public.user_scope_employees x
+                 where t.data_scope = 'selected' and x.user_id = t.id
+    ) v where v.e is not null and not app.can_see_employee(v.e));
+end $$;
+
+create or replace function app.require_not_above_caller(p_user uuid) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if app.exceeds_caller(p_user) then
+    perform app.fail('above_caller', 'الحساب يملك صلاحيات أو نطاقًا لا تملكه؛ الإجراء للإدارة');
+  end if;
+end $$;
+
 -- p_user: {username, password, display_name, employee_id, is_admin, template_id, data_scope,
 --          overrides:[{page,action,granted}], scope_employees:[ids]}
 create or replace function public.admin_save_user(p_id uuid, p_user jsonb) returns uuid
@@ -601,6 +646,10 @@ begin
     if (select is_admin from public.app_users where id = v_id) and not app.is_admin() then
       perform app.fail('admin_only', 'تعديل حساب إدارة للإدارة فقط');
     end if;
+    if v_id = auth.uid() and not app.is_admin() then
+      perform app.fail('self_edit', 'تعديل حسابك وصلاحياتك للإدارة فقط');
+    end if;
+    perform app.require_not_above_caller(v_id);
     if v_id = auth.uid() and not v_is_admin and app.is_admin() then
       perform app.fail('self_demote', 'لا يمكن سحب صفة الإدارة من حسابك الحالي');
     end if;
@@ -621,6 +670,8 @@ begin
     insert into public.user_scope_employees (user_id, employee_id)
     select v_id, x::bigint from jsonb_array_elements_text(coalesce(p_user->'scope_employees', '[]')) x;
   end if;
+  -- غير الإدارة لا يمنح أكثر مما يملك
+  perform app.require_not_above_caller(v_id);
 
   perform app.audit('app_users', v_id::text, case when p_id is null then 'create' else 'update' end,
                     v_before, app.user_json(v_id));
@@ -632,9 +683,13 @@ returns void language plpgsql security definer set search_path = public, app, au
 begin
   perform app.require_perm('P20', 'edit');
   if p_id = auth.uid() then perform app.fail('self_disable', 'لا يمكن تعطيل حسابك الحالي'); end if;
+  if not exists (select 1 from public.app_users where id = p_id) then
+    perform app.fail('not_found', 'الحساب غير موجود');
+  end if;
   if (select is_admin from public.app_users where id = p_id) and not app.is_admin() then
     perform app.fail('admin_only', 'تعطيل حساب إدارة للإدارة فقط');
   end if;
+  perform app.require_not_above_caller(p_id);
   update public.app_users set active = p_active, updated_at = now() where id = p_id;
   update auth.users set banned_until = case when p_active then null else 'infinity'::timestamptz end where id = p_id;
   perform app.audit('app_users', p_id::text, case when p_active then 'enable' else 'disable' end,
@@ -649,6 +704,10 @@ begin
   if (select is_admin from public.app_users where id = p_id) and not app.is_admin() then
     perform app.fail('admin_only', 'إعادة تعيين كلمة مرور الإدارة للإدارة فقط');
   end if;
+  if p_id = auth.uid() and not app.is_admin() then
+    perform app.fail('self_edit', 'غيّر كلمة مرورك من «تغيير كلمة المرور»');
+  end if;
+  perform app.require_not_above_caller(p_id);
   perform app.validate_password(p_password);
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_id;
   perform app.audit('app_users', p_id::text, 'reset_password', null, null);
@@ -674,6 +733,11 @@ declare
 begin
   perform app.require_perm('P20', case when p_id is null then 'add' else 'edit' end);
   if coalesce(trim(p_name), '') = '' then perform app.fail('name_required', 'اسم القالب مطلوب'); end if;
+  -- غير الإدارة لا يضع في قالب صلاحية لا يملكها
+  if exists (select 1 from jsonb_array_elements(coalesce(p_perms, '[]')) x
+              where not app.has_perm(x->>'page', x->>'action')) then
+    perform app.fail('above_caller', 'القالب يتضمن صلاحيات لا تملكها؛ الإجراء للإدارة');
+  end if;
   if v_id is null then
     insert into public.permission_templates (name) values (trim(p_name)) returning id into v_id;
   else
@@ -855,6 +919,15 @@ language sql stable security definer set search_path = public, app as $$
       or exists (select 1 from public.customer_employee_links l
                   where l.customer_id = p_customer and app.can_see_employee(l.employee_id))
 $$;
+
+-- دوال الكتابة لا تمس عميلًا خارج نطاق المستخدم (B072)
+create or replace function app.require_customer_scope(p_customer bigint) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if not app.can_see_customer(p_customer) then
+    perform app.fail('out_of_scope', 'هذا العميل خارج نطاق بياناتك');
+  end if;
+end $$;
 
 -- =====================================================================
 -- المنتجات
@@ -1042,6 +1115,7 @@ begin
       values (v_id, (p->>'supervisor_id')::bigint, null);
     end if;
   else
+    perform app.require_employee_scope(v_id);
     v_before := app.employee_json(v_id);
     update public.employees set emp_number = v_num, name = v_name, job_role = nullif(trim(p->>'job_role'), ''),
            updated_at = now() where id = v_id;
@@ -1060,6 +1134,7 @@ declare
   v_before jsonb := app.employee_json(p_employee);
 begin
   perform app.require_perm('P03', 'edit');
+  perform app.require_employee_scope(p_employee);
   if p_status not in ('مستقيل', 'موقوف') then perform app.fail('bad_status', 'الحالة يجب أن تكون مستقيل أو موقوف'); end if;
   select * into v_period from public.employment_periods where employee_id = p_employee and end_date is null;
   if not found then perform app.fail('no_open_period', 'لا توجد فترة عمل مفتوحة لهذا الموظف'); end if;
@@ -1083,6 +1158,7 @@ declare
   v_before jsonb := app.employee_json(p_employee);
 begin
   perform app.require_perm('P03', 'edit');
+  perform app.require_employee_scope(p_employee);
   if exists (select 1 from public.employment_periods where employee_id = p_employee and end_date is null) then
     perform app.fail('already_active', 'للموظف فترة عمل مفتوحة');
   end if;
@@ -1107,6 +1183,7 @@ begin
   if coalesce(trim(p_reason), '') = '' then perform app.fail('reason_required', 'سبب التصحيح مطلوب'); end if;
   select * into v from public.employment_periods where id = p_period;
   if not found then perform app.fail('not_found', 'الفترة غير موجودة'); end if;
+  perform app.require_employee_scope(v.employee_id);
   if p_end is not null and p_end < p_start then perform app.fail('end_before_start', 'النهاية تسبق البداية'); end if;
   if exists (select 1 from public.employment_periods o
               where o.employee_id = v.employee_id and o.id <> v.id
@@ -1178,6 +1255,7 @@ declare
   v_cut date := case when p_move_prior then p_move_from else p_effective end;
 begin
   perform app.require_perm('P03', 'transfer');
+  perform app.require_employee_scope(p_employee);
   if p_effective is null then perform app.fail('required', 'تاريخ السريان مطلوب'); end if;
   perform app.guard_dates(array[app.first_closed_in(v_cut, app.today())], p_code);
   perform app.apply_supervisor_change(p_employee, p_new_supervisor, p_effective, p_move_prior, p_move_from, p_reason);
@@ -1465,6 +1543,7 @@ begin
       insert into public.customer_master_links (customer_id, master_id, valid_from) values (v_id, v_master, null);
     end if;
   else
+    perform app.require_customer_scope(v_id);
     v_before := app.customer_json(v_id);
     update public.customers set customer_number = v_num, name = v_name,
            company_id = nullif(trim(p->>'company_id'), ''), grace_days = v_grace::int, updated_at = now()
@@ -1515,6 +1594,7 @@ declare
   v_master bigint;
 begin
   perform app.require_perm('P02', 'edit');
+  perform app.require_customer_scope(p_customer);
   if p_effective is null then perform app.fail('required', 'تاريخ السريان مطلوب'); end if;
   if nullif(trim(p_master_number), '') is not null then
     select id into v_master from public.customers where customer_number = trim(p_master_number);
@@ -1534,6 +1614,7 @@ begin
   if not (app.has_perm('P16', 'edit') or app.has_perm('P02', 'edit')) then
     perform app.fail('forbidden', 'لا تملك صلاحية هذا الإجراء');
   end if;
+  perform app.require_customer_scope(p_customer);
   if (p_lat is null) <> (p_lng is null) then perform app.fail('bad_location', 'خط العرض وخط الطول معًا أو لا شيء'); end if;
   if p_lat is not null and (p_lat not between -90 and 90 or p_lng not between -180 and 180) then
     perform app.fail('bad_location', 'إحداثيات خارج النطاق');
@@ -1936,6 +2017,13 @@ begin
       or exists (select 1 from jsonb_array_elements(v_plan->'new') n where n->'values' ? 'cost'))
      and not app.has_perm('P04', 'view_cost') then
     perform app.fail('forbidden', 'الملف يغير سعر التكلفة ولا تملك صلاحيته');
+  end if;
+  if (exists (select 1 from jsonb_array_elements(v_plan->'changed') c, jsonb_object_keys(c->'fields') k2
+               where k2 not in ('name', 'sale', 'cost', 'packing'))
+      or exists (select 1 from jsonb_array_elements(v_plan->'new') n, jsonb_object_keys(n->'values') k2
+                  where k2 not in ('sale', 'cost', 'packing')))
+     and not app.has_perm('P04', 'view_commission') then
+    perform app.fail('forbidden', 'الملف يغير نسب العمولة ولا تملك صلاحيتها');
   end if;
   foreach k in array array['sale', 'cost', 'packing', 'rates'] loop
     d := app.to_date(p_dates->>k);

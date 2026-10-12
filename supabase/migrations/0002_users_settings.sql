@@ -112,6 +112,42 @@ language sql stable security definer set search_path = public as $$
   from public.app_users u where u.id = p_id
 $$;
 
+-- هل يملك الحساب ما لا يملكه المستخدم الحالي: صلاحيةً أو موظفًا خارج نطاقه؟
+-- غير الإدارة لا يدير حسابًا فوقه ولا يمنح أكثر مما يملك (B073، AUTH-002).
+create or replace function app.exceeds_caller(p_user uuid) returns boolean
+language plpgsql stable security definer set search_path = public, app as $$
+declare
+  t public.app_users;
+begin
+  if app.is_admin() then return false; end if;
+  select * into t from public.app_users where id = p_user;
+  if not found then return false; end if;
+  if t.is_admin then return true; end if;
+  if exists (select 1 from public.pages p, unnest(p.actions) a
+              where app.granted(t.id, p.code, 'view') and (a = 'view' or app.granted(t.id, p.code, a))
+                and not app.has_perm(p.code, a)) then
+    return true;
+  end if;
+  if app.scope_is_all() then return false; end if;
+  if t.data_scope = 'all' then return true; end if;
+  return exists (
+    select 1 from (
+      select t.employee_id as e
+      union all select s.employee_id from public.supervisor_assignments s
+                 where t.data_scope = 'team' and s.supervisor_id = t.employee_id
+      union all select x.employee_id from public.user_scope_employees x
+                 where t.data_scope = 'selected' and x.user_id = t.id
+    ) v where v.e is not null and not app.can_see_employee(v.e));
+end $$;
+
+create or replace function app.require_not_above_caller(p_user uuid) returns void
+language plpgsql stable security definer set search_path = public, app as $$
+begin
+  if app.exceeds_caller(p_user) then
+    perform app.fail('above_caller', 'الحساب يملك صلاحيات أو نطاقًا لا تملكه؛ الإجراء للإدارة');
+  end if;
+end $$;
+
 -- p_user: {username, password, display_name, employee_id, is_admin, template_id, data_scope,
 --          overrides:[{page,action,granted}], scope_employees:[ids]}
 create or replace function public.admin_save_user(p_id uuid, p_user jsonb) returns uuid
@@ -148,6 +184,10 @@ begin
     if (select is_admin from public.app_users where id = v_id) and not app.is_admin() then
       perform app.fail('admin_only', 'تعديل حساب إدارة للإدارة فقط');
     end if;
+    if v_id = auth.uid() and not app.is_admin() then
+      perform app.fail('self_edit', 'تعديل حسابك وصلاحياتك للإدارة فقط');
+    end if;
+    perform app.require_not_above_caller(v_id);
     if v_id = auth.uid() and not v_is_admin and app.is_admin() then
       perform app.fail('self_demote', 'لا يمكن سحب صفة الإدارة من حسابك الحالي');
     end if;
@@ -168,6 +208,8 @@ begin
     insert into public.user_scope_employees (user_id, employee_id)
     select v_id, x::bigint from jsonb_array_elements_text(coalesce(p_user->'scope_employees', '[]')) x;
   end if;
+  -- غير الإدارة لا يمنح أكثر مما يملك
+  perform app.require_not_above_caller(v_id);
 
   perform app.audit('app_users', v_id::text, case when p_id is null then 'create' else 'update' end,
                     v_before, app.user_json(v_id));
@@ -179,9 +221,13 @@ returns void language plpgsql security definer set search_path = public, app, au
 begin
   perform app.require_perm('P20', 'edit');
   if p_id = auth.uid() then perform app.fail('self_disable', 'لا يمكن تعطيل حسابك الحالي'); end if;
+  if not exists (select 1 from public.app_users where id = p_id) then
+    perform app.fail('not_found', 'الحساب غير موجود');
+  end if;
   if (select is_admin from public.app_users where id = p_id) and not app.is_admin() then
     perform app.fail('admin_only', 'تعطيل حساب إدارة للإدارة فقط');
   end if;
+  perform app.require_not_above_caller(p_id);
   update public.app_users set active = p_active, updated_at = now() where id = p_id;
   update auth.users set banned_until = case when p_active then null else 'infinity'::timestamptz end where id = p_id;
   perform app.audit('app_users', p_id::text, case when p_active then 'enable' else 'disable' end,
@@ -196,6 +242,10 @@ begin
   if (select is_admin from public.app_users where id = p_id) and not app.is_admin() then
     perform app.fail('admin_only', 'إعادة تعيين كلمة مرور الإدارة للإدارة فقط');
   end if;
+  if p_id = auth.uid() and not app.is_admin() then
+    perform app.fail('self_edit', 'غيّر كلمة مرورك من «تغيير كلمة المرور»');
+  end if;
+  perform app.require_not_above_caller(p_id);
   perform app.validate_password(p_password);
   update auth.users set encrypted_password = crypt(p_password, gen_salt('bf')), updated_at = now() where id = p_id;
   perform app.audit('app_users', p_id::text, 'reset_password', null, null);
@@ -221,6 +271,11 @@ declare
 begin
   perform app.require_perm('P20', case when p_id is null then 'add' else 'edit' end);
   if coalesce(trim(p_name), '') = '' then perform app.fail('name_required', 'اسم القالب مطلوب'); end if;
+  -- غير الإدارة لا يضع في قالب صلاحية لا يملكها
+  if exists (select 1 from jsonb_array_elements(coalesce(p_perms, '[]')) x
+              where not app.has_perm(x->>'page', x->>'action')) then
+    perform app.fail('above_caller', 'القالب يتضمن صلاحيات لا تملكها؛ الإجراء للإدارة');
+  end if;
   if v_id is null then
     insert into public.permission_templates (name) values (trim(p_name)) returning id into v_id;
   else
