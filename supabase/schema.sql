@@ -2982,9 +2982,7 @@ begin
   v_norm := v->'norm';
   if (select id from public.employees where emp_number = v_norm->>'employee_number') is distinct from d.employee_id then
     perform app.require_perm('P06', 'transfer');
-    if not app.can_see_employee((select id from public.employees where emp_number = v_norm->>'employee_number')) then
-      perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك');
-    end if;
+    perform app.require_employee_scope((select id from public.employees where emp_number = v_norm->>'employee_number'));
   end if;
   if d.kind = 'invoice' and v_norm->>'pay_type' is null then
     perform app.fail('invalid_doc', 'نوع الفاتورة مطلوب: «فاتورة نقدي» أو «فاتورة ذمم»');
@@ -3013,7 +3011,7 @@ begin
   perform app.require_perm('P06', 'transfer');
   select * into v_emp from public.employees where emp_number = trim(p_employee_number);
   if not found then perform app.fail('unknown_employee', 'موظف غير معرّف: ' || coalesce(p_employee_number, '')); end if;
-  if not app.can_see_employee(v_emp.id) then perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك'); end if;
+  perform app.require_employee_scope(v_emp.id);
   return (
     select jsonb_build_object(
       'to', jsonb_build_object('emp_number', v_emp.emp_number, 'name', v_emp.name),
@@ -3038,7 +3036,7 @@ begin
   perform app.require_perm('P06', 'transfer');
   select * into v_emp from public.employees where emp_number = trim(p_employee_number);
   if not found then perform app.fail('unknown_employee', 'موظف غير معرّف: ' || coalesce(p_employee_number, '')); end if;
-  if not app.can_see_employee(v_emp.id) then perform app.fail('forbidden', 'الموظف الجديد خارج نطاق بياناتك'); end if;
+  perform app.require_employee_scope(v_emp.id);
   perform app.guard_dates((select array_agg(doc_date) from public.docs where id = any(p_ids) and status = 'active'), p_code);
   for d in select * from public.docs where id = any(p_ids) and status = 'active' order by id for update loop
     if not app.can_see_employee(d.employee_id) then perform app.fail('forbidden', 'سند خارج نطاق بياناتك: ' || d.doc_number); end if;
