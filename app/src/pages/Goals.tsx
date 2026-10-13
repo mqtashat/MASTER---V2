@@ -260,8 +260,12 @@ function PlanEditor({ role, month, planId, employeeId, candidates, onClose, onDo
     const t = templates.find((x) => String(x.id) === id);
     if (t) { setPlan({ ...plan, ...t.data, template_id: t.id }); setPreview(null); }
   };
-  const doPreview = () => run(async () => setPreview(await rpc<Eval>('preview_goal_plan', { p_id: planId, p: { ...payload(), reason: 'معاينة' } })));
+  const checkVariety = () => {
+    if (comps.some((c) => c.metric === 'variety_ratio' && !(c.filters?.products ?? []).length)) throw new Error('نسبة التنوع تحتاج قائمة أصناف: اختر الأصناف التي تُحسب منها');
+  };
+  const doPreview = () => run(async () => { checkVariety(); setPreview(await rpc<Eval>('preview_goal_plan', { p_id: planId, p: { ...payload(), reason: 'معاينة' } })); });
   const save = () => run(async () => {
+    checkVariety();
     const id = await guarded((code) => rpc<number>('save_goal_plan', { p_id: planId, p: payload(), p_reason: planId ? reason : null, p_code: code }));
     onDone(id);
   });
@@ -372,11 +376,12 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
           <option value="all">المباشر والعروض</option><option value="direct">المباشر فقط</option><option value="promo">العروض فقط</option></select></Field>
         <Field label="الدفع"><select value={f.pay_type ?? 'all'} onChange={(e) => setF({ pay_type: e.target.value as Filters['pay_type'] })}>
           <option value="all">نقدي وذمم</option><option value="cash">نقدي</option><option value="credit">ذمم</option></select></Field>
-        <Field label="أصناف (أكواد)" hint="فارغ = كل الأصناف">
+        {c.metric !== 'variety_ratio' && <Field label="أصناف (أكواد)" hint="فارغ = كل الأصناف">
           <input defaultValue={codes} onBlur={(e) => setF({ products: e.target.value.split(/[\s,،]+/).filter(Boolean)
             .map((code) => products.find((p) => p.code === code)?.id).filter((x): x is number => !!x) })} />
-        </Field>
+        </Field>}
       </>}
+      {c.metric === 'variety_ratio' && <ProductPicker products={products} value={f.products ?? []} onChange={(ids) => setF({ products: ids })} />}
       {c.metric === 'reactivated' && <Field label="N يومًا"><input inputMode="numeric" value={f.days ?? 90} onChange={(e) => setF({ days: e.target.value })} /></Field>}
       {['collection', 'collection_ratio'].includes(c.metric) && (
         <Field label="أساس التحصيل"><select value={f.basis ?? 'collector'} onChange={(e) => setF({ basis: e.target.value as Filters['basis'] })}>
@@ -390,6 +395,29 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
       )}
       {def.kind !== 'relative' && <label className="check"><input type="checkbox" checked={c.affected} onChange={(e) => onChange({ ...c, affected: e.target.checked })} /> يتأثر بتعديل أيام العمل</label>}
       <button className="btn link" onClick={onRemove}>حذف المكوّن</button>
+    </div>
+  );
+}
+
+// أصناف قاعدة نسبة التنوع: تُختار عند تعريف المكوّن، والاختيار إلزامي
+function ProductPicker({ products, value, onChange }: { products: Product[]; value: number[]; onChange: (ids: number[]) => void }) {
+  const [q, setQ] = useState('');
+  const sel = new Set(value);
+  const shown = products.filter((p) => !q.trim() || p.code.includes(q.trim()) || p.name.includes(q.trim()));
+  const toggle = (id: number) => onChange(sel.has(id) ? value.filter((x) => x !== id) : [...value, id]);
+  return (
+    <div className="product-picker" data-testid="variety-products">
+      <Field label="أصناف القاعدة (إلزامي)" hint="النسبة = ما بيع منها ÷ عددها × 100">
+        <input placeholder="بحث بالكود أو الاسم" value={q} onChange={(e) => setQ(e.target.value)} aria-label="بحث الأصناف" />
+      </Field>
+      <div className="actions">
+        <span className={value.length ? 'small' : 'small bad-text'}>{value.length ? `${value.length} صنف مختار` : 'اختر صنفًا واحدًا على الأقل'}</span>
+        <button type="button" className="btn link" onClick={() => onChange([...new Set([...value, ...shown.map((p) => p.id)])])}>اختيار الظاهر</button>
+        <button type="button" className="btn link" disabled={!value.length} onClick={() => onChange([])}>مسح</button>
+      </div>
+      <div className="picker-list">{shown.map((p) => (
+        <label key={p.id} className="check"><input type="checkbox" checked={sel.has(p.id)} onChange={() => toggle(p.id)} /> {p.code} — {p.name}</label>
+      ))}{!shown.length && <span className="small muted">لا أصناف مطابقة</span>}</div>
     </div>
   );
 }

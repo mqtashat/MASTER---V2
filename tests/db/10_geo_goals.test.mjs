@@ -99,19 +99,23 @@ test('التغطية: المشترون من عملاء المندوب في من�
   } finally { await db.close(); }
 });
 
-test('نسبة التنوع: الأصناف المباعة ÷ أصناف القائمة، والشرائح بأهداف لكل شريحة', async () => {
+test('نسبة التنوع: الأصناف المباعة ÷ أصناف القائمة المختارة، والقائمة إلزامية', async () => {
   const db = await connect();
   try {
     const { a, e, p } = await scene(db);
-    // صنفان معرّفان (A1، A2)؛ المندوب أ باع A1 فقط في سبتمبر → 50%
-    assert.equal(await mv(db, e.r1, 'variety_ratio', {}), 50);
+    // القائمة A1 وA2؛ المندوب أ باع A1 فقط في سبتمبر → 50%
+    const both = { products: [p.A1, p.A2] };
+    assert.equal(await mv(db, e.r1, 'variety_ratio', both), 50);
     await add(db, a, 'invoice', [{ cust: '500', date: '2026-09-20', lines: [['A2', 10]] }]);
-    assert.equal(await mv(db, e.r1, 'variety_ratio', {}), 100);
-    assert.equal(await mv(db, e.r1, 'variety_ratio', { products: [p.A2] }), 100, 'القائمة أصناف المكوّن');
-    // B عند 80 وA عند 90: 100% تحقق A
-    const id = await db.rpc(a, 'save_goal_plan', { p_id: null, p: { month: '2026-09-01', employee_id: e.r1, role: 'rep',
+    assert.equal(await mv(db, e.r1, 'variety_ratio', both), 100);
+    assert.equal(await mv(db, e.r1, 'variety_ratio', { products: [p.A2] }), 100);
+    assert.equal(await mv(db, e.r1, 'variety_ratio', {}), null, 'بلا قائمة لا قاعدة');
+    const save = (filters) => db.rpc(a, 'save_goal_plan', { p_id: null, p: { month: '2026-09-01', employee_id: e.r1, role: 'rep',
       tiers: [{ tier: 'A', logic: 'AND' }, { tier: 'B', logic: 'AND' }],
-      components: [{ tier: 'A', metric: 'variety_ratio', target: 90 }, { tier: 'B', metric: 'variety_ratio', target: 80 }] } });
+      components: [{ tier: 'A', metric: 'variety_ratio', target: 90, filters }, { tier: 'B', metric: 'variety_ratio', target: 80, filters }] } });
+    await rejects(save({}), 'قائمة أصناف');
+    // B عند 80 وA عند 90: 100% تحقق A
+    const id = await save(both);
     const ev = (await db.rpc(a, 'goal_plan', { p_id: id, p_cutoff: '2026-09-30' })).eval;
     assert.equal(ev.achieved, 'A');
     assert.equal(ev.components[0].label, 'نسبة التنوع');

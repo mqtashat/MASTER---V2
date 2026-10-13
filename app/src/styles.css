@@ -302,3 +302,6 @@ details.defs ul { margin: 6px 0 0; padding-inline-start: 18px; }
   .report-doc .tbl { overflow: visible; border: 0; }
   .report-doc table { font-size: 11px; }
 }
+.product-picker { grid-column: 1 / -1; display: grid; gap: 6px; }
+.product-picker .picker-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 10px; max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: 6px; }
+.bad-text { color: var(--bad); }
