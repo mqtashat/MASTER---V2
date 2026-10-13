@@ -209,6 +209,23 @@ try {
     await page.screenshot({ path: path.join(out, 'm5-spread.png'), fullPage: true });
   });
 
+  await step('هدف تغطية منطقة ونسبة تنوع في محرر الخطة بمعاينة', async () => {
+    await page.goto(BASE + '#/goals');
+    await page.getByLabel('الشهر').fill(cur.slice(0, 7));
+    await page.getByRole('button', { name: 'خطة جديدة' }).click();
+    const dlg = page.locator('.modal');
+    await dlg.getByLabel('الموظف').selectOption(String(e.r1));
+    await dlg.getByRole('button', { name: 'إضافة مكوّن' }).first().click();
+    await dlg.getByLabel('المقياس').selectOption('coverage');
+    await dlg.getByLabel('المنطقة').selectOption({ label: 'الغربية' });
+    await dlg.getByLabel('الهدف %').fill('40');
+    await dlg.getByRole('button', { name: 'معاينة النتيجة' }).click();
+    await dlg.getByText('المعاينة قبل الاعتماد').waitFor();
+    await dlg.getByText('المنطقة: الغربية').first().waitFor();
+    await page.screenshot({ path: path.join(out, 'm5-coverage-goal.png'), fullPage: true });
+    await dlg.getByRole('button', { name: 'إغلاق' }).first().click();
+  });
+
   await step('الهاتف 390: صفحات الخرائط دون تمرير أفقي للصفحة', async () => {
     const c2 = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'ar', isMobile: true, hasTouch: true });
     const p2 = await c2.newPage();

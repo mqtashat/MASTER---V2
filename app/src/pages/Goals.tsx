@@ -10,8 +10,9 @@ import { fmtDate, fmtMonth, fmtPct } from '../lib/format';
 import { writeSheet } from '../lib/excel';
 import {
   addMonths, Eval, EvalComp, Filters, filtersText, fmtMetric, fromMonthInput, METRICS, metricDef, monthInput, Plan, PlanComponent,
-  PlanTier, Product, thisMonth, tierClass, useEmployees, useProducts,
+  PlanTier, Product, REGION_METRICS, thisMonth, tierClass, useEmployees, useProducts,
 } from '../lib/goals';
+import { useRegions } from './InvoiceMap';
 import { Badge, Drawer, Field, Modal, Msg, useAction, useGuarded } from '../components/ui';
 import { AuditList } from './Settings';
 
@@ -189,6 +190,7 @@ export function EvalView({ ev, plan, products }: { ev: Eval; plan?: Plan; produc
 }
 
 function CompTable({ comps, products }: { comps: EvalComp[]; products: Product[] }) {
+  const regions = useRegions();
   if (!comps.length) return <p className="muted small">لا مكونات</p>;
   return (
     <div className="tbl"><table>
@@ -197,7 +199,7 @@ function CompTable({ comps, products }: { comps: EvalComp[]; products: Product[]
       <tbody>{comps.map((c) => (
         <tr key={c.id} className={c.status === 'zero' ? 'zero' : c.status === 'unused' ? 'row-muted' : ''}>
           <td className="wrap">{c.label}{!c.affected && <span className="muted small"> · لا يتأثر بالأيام</span>}
-            {filtersText(c.filters, products) && <div className="small muted">{filtersText(c.filters, products)}</div>}
+            {filtersText(c.filters, products, regions) && <div className="small muted">{filtersText(c.filters, products, regions)}</div>}
             {c.team && <details><summary className="small">مجموع الفريق ({c.team.count})</summary>
               <table className="inner"><tbody>{c.team.parts.map((p) => <tr key={p.employee_id}><td>{p.name}</td><td className="num">{fmtMetric(p.final, c.kind)}</td>
                 <td className="num small">{p.under}/{p.days} يوم</td><td className="num">{fmtMetric(p.share, c.kind)}</td></tr>)}</tbody></table></details>}</td>
@@ -356,6 +358,7 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
   const f = c.filters ?? {};
   const setF = (n: Partial<Filters>) => onChange({ ...c, filters: { ...f, ...n } });
   const codes = (f.products ?? []).map((id) => products.find((p) => p.id === id)?.code ?? '').join(' ');
+  const regions = useRegions();
   return (
     <div className="comp-row">
       <Field label="المقياس" hint={def.hint}>
@@ -364,7 +367,7 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
         </select>
       </Field>
       <Field label={def.kind === 'relative' ? 'الهدف %' : 'الهدف'}><input inputMode="decimal" value={c.target ?? ''} onChange={(e) => onChange({ ...c, target: e.target.value })} /></Field>
-      {['net_sales', 'gross_sales', 'quantity', 'customers', 'invoices', 'variety'].includes(c.metric) && <>
+      {['net_sales', 'gross_sales', 'quantity', 'customers', 'invoices', 'variety', 'variety_ratio'].includes(c.metric) && <>
         <Field label="نوع البيع"><select value={f.sale_type ?? 'all'} onChange={(e) => setF({ sale_type: e.target.value as Filters['sale_type'] })}>
           <option value="all">المباشر والعروض</option><option value="direct">المباشر فقط</option><option value="promo">العروض فقط</option></select></Field>
         <Field label="الدفع"><select value={f.pay_type ?? 'all'} onChange={(e) => setF({ pay_type: e.target.value as Filters['pay_type'] })}>
@@ -378,6 +381,12 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
       {['collection', 'collection_ratio'].includes(c.metric) && (
         <Field label="أساس التحصيل"><select value={f.basis ?? 'collector'} onChange={(e) => setF({ basis: e.target.value as Filters['basis'] })}>
           <option value="collector">مندوب التحصيل في السند</option><option value="invoice_rep">مندوب الفاتورة المسددة</option></select></Field>
+      )}
+      {REGION_METRICS.includes(c.metric) && (
+        <Field label="المنطقة" hint={c.metric === 'coverage' ? 'فارغ = منطقة الموظف المسندة إليه' : 'فارغ = كل المناطق؛ العميل بموقعه المحفوظ'}>
+          <select value={f.region_id ?? ''} onChange={(e) => setF({ region_id: e.target.value ? Number(e.target.value) : null })}>
+            <option value="">{c.metric === 'coverage' ? 'منطقة الموظف' : 'كل المناطق'}</option>{regions.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
+        </Field>
       )}
       {def.kind !== 'relative' && <label className="check"><input type="checkbox" checked={c.affected} onChange={(e) => onChange({ ...c, affected: e.target.checked })} /> يتأثر بتعديل أيام العمل</label>}
       <button className="btn link" onClick={onRemove}>حذف المكوّن</button>
