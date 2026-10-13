@@ -193,3 +193,58 @@ table.inner th, table.inner td { padding: 4px 6px; border-bottom: 1px solid var(
   .modal { box-shadow: none !important; max-height: none !important; overflow: visible !important; }
   .modal-body { overflow: visible !important; max-height: none !important; }
 }
+
+/* وحدة الأهداف والعمولات: ألوان الشرائح (CARD-009) */
+.tier { display: inline-block; min-width: 26px; text-align: center; border-radius: 4px; padding: 0 6px; font-weight: 700; font-size: 12.5px; }
+.tier.tA { background: var(--tA-bg); color: var(--tA); }
+.tier.tB { background: var(--tB-bg); color: var(--tB); }
+.tier.tC { background: var(--tC-bg); color: var(--tC); }
+.tier.tX { background: var(--tX-bg); color: var(--tX); }
+.tier.tO { background: var(--accent-soft); color: var(--accent); }
+.tier.none { background: #fdeceb; color: #a35a55; }
+.tier.big { font-size: 22px; min-width: 48px; padding: 2px 10px; font-family: var(--font-display); }
+.ok-text { color: var(--ok); }
+.bad-text { color: var(--bad); }
+
+/* محرر الخطة */
+.comp-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px 10px; align-items: end; padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.comp-row:last-of-type { margin-bottom: 8px; }
+.member-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; max-height: 260px; overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: var(--r); }
+
+/* التقويم */
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-dow { text-align: center; font-weight: 600; color: var(--muted); font-size: 12.5px; }
+.cal-day { min-height: 64px; border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
+.cal-day.off { background: var(--surface-2); }
+.cal-day.inel { opacity: .5; }
+.cal-day.prop { background: var(--warn-soft); }
+.cal-day.fixed { background: var(--tC-bg); }
+@media (max-width: 560px) { .cal-day { min-height: 48px; } .cal-day .small { display: none; } }
+
+/* بطاقات الأداء: 3 في الصف و4 في الشاشات الكبيرة */
+.pop { position: absolute; inset-inline-end: 0; top: calc(100% + 4px); z-index: 30; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; display: grid; gap: 4px; min-width: 200px; box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 1500px) { .cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } main.wrap:has(.cards) { max-width: 1600px; } }
+@media (max-width: 960px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+.perf-card { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--line); border-radius: var(--r); padding: 10px 12px; display: grid; gap: 6px; align-content: start; }
+.perf-card.c-tA { border-top-color: var(--tA); }
+.perf-card.c-tB { border-top-color: var(--tB); }
+.perf-card.c-tC { border-top-color: var(--tC); }
+.perf-card.c-tX { border-top-color: var(--tX); }
+.perf-card.c-tO { border-top-color: var(--accent); }
+.perf-card.c-none { border-top-color: #e8a6a1; background: #fffafa; }
+.pc-head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.pc-name { font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+.pc-tiers { display: grid; justify-items: center; gap: 2px; }
+.pc-main { background: var(--surface-2); border-radius: 6px; padding: 6px 8px; display: grid; gap: 3px; }
+.pc-row { display: flex; justify-content: space-between; gap: 8px; }
+.pc-grid { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 2px 8px; font-size: 12.5px; }
+.pc-grid > span { color: var(--muted); }
+.pc-foot { display: flex; justify-content: flex-end; }
+.bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--accent); }
+
+/* مراحل كشف العمولة */
+.stages td:first-child { width: 34%; }
+.stages tr.total td { border-top: 2px solid #333; }

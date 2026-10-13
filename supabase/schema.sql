@@ -5036,7 +5036,7 @@ $$;
 
 -- التحصيل المسدد لفواتير موظف بأساس «مندوب الفاتورة» (GOAL-017): ما خُصص في الفترة على فواتير ذممه
 create or replace function app.paid_on_invoices(p_emp bigint, p_role text, p_personal boolean, p_from date, p_to date)
-returns numeric language plpgsql stable security definer set search_path = public, app as $$
+returns numeric language plpgsql security definer set search_path = public, app as $$
 declare
   v numeric;
 begin
@@ -5052,7 +5052,7 @@ end $$;
 -- قيمة مقياس لموظف في مدى (قبل حد القطع). p_f: {products:[ids], sale_type, pay_type, days, basis}
 create or replace function app.metric_value(p_emp bigint, p_role text, p_personal boolean, p_from date, p_to date,
                                             p_metric text, p_f jsonb) returns numeric
-language plpgsql stable security definer set search_path = public, app as $$
+language plpgsql security definer set search_path = public, app as $$
 declare
   v_products bigint[] := (select array_agg(x::bigint) from jsonb_array_elements_text(coalesce(p_f->'products', '[]')) x);
   v_sale text := coalesce(p_f->>'sale_type', 'all');
@@ -5214,7 +5214,7 @@ language sql immutable as $$ select case p_role when 'supervisor' then 'P10a' el
 -- حصة هدف مكوّن المندوب للمشرف بحسب أيام العمل ضمن تبعيته له (GOAL-011):
 -- الهدف النهائي للمندوب × أيام عمله المنقضية تحت المشرف ÷ إجمالي أيام عمله.
 create or replace function app.team_target(p_sup bigint, p_month date, p_tier text, p_metric text) returns jsonb
-language plpgsql stable security definer set search_path = public, app as $$
+language plpgsql security definer set search_path = public, app as $$
 declare
   r record; c public.goal_components; v_days jsonb; v_total int; v_under int; v_final numeric;
   v_sum numeric := 0; v_parts jsonb := '[]';
@@ -5251,7 +5251,7 @@ end $$;
 
 -- تقييم الخطة حتى تاريخ القطع؛ يعيد المكونات والشرائح والأيام والشريحة المحققة وشريحة المسار
 create or replace function app.plan_eval(p_plan bigint, p_cutoff date default null) returns jsonb
-language plpgsql stable security definer set search_path = public, app as $$
+language plpgsql security definer set search_path = public, app as $$
 declare
   pl public.goal_plans;
   v_from date; v_to date; v_cut date;
@@ -5274,13 +5274,14 @@ begin
     if pl.role = 'supervisor' and pl.sup_mode = 'team_sum' and app.metric_kind(c.metric) <> 'relative' then
       v_team := app.team_target(pl.employee_id, pl.month, c.tier, c.metric);
       v_final := (v_team->>'sum')::numeric;
-      if (v_team->>'count')::int = 0 then v_final := null; end if;
     else
       v_final := app.final_target(c.target, c.metric, c.affected, pl.partial_mode, v_days);
     end if;
     v_actual := app.metric_value(pl.employee_id, pl.role, pl.include_personal, v_from, v_cut, c.metric, c.filters);
     v_zero := v_final is not null and v_final = 0;
-    v_status := case when v_final is null then 'unused' when v_zero then 'zero' else 'ok' end;
+    -- مجموع فريق بلا أعضاء في الشهر: صفر ظاهر غير مستخدم في التقييم
+    v_status := case when v_final is null or (v_team is not null and (v_team->>'count')::int = 0) then 'unused'
+                     when v_zero then 'zero' else 'ok' end;
     v_met := v_status = 'ok' and v_actual is not null and v_actual >= v_final;
     v_has_path := v_status = 'ok' and app.metric_kind(c.metric) <> 'relative' and v_total > 0;
     v_required := case when v_has_path then v_final * v_elapsed / v_total end;
@@ -5541,7 +5542,7 @@ $$;
 
 -- الشريحة المعتمدة للحساب: من النسخة المحفوظة للشهر المغلق، وإلا المحسوبة ثم اليدوية
 create or replace function app.eff_tier(p_emp bigint, p_month date) returns text
-language plpgsql stable security definer set search_path = public, app as $$
+language plpgsql security definer set search_path = public, app as $$
 declare
   v_plan bigint; v text;
 begin
@@ -6513,17 +6514,17 @@ begin
   v_m := coalesce(v_old.month, app.month_of((p->>'month')::date));
   v_emps := (select array_agg(x::bigint) from jsonb_array_elements_text(p->'employees') x where jsonb_typeof(p->'employees') = 'array');
   if v_m is null or coalesce(trim(p->>'name'), '') = '' then perform app.fail('required', 'الشهر واسم المكافأة مطلوبان'); end if;
-  if v_mode not in ('STACK', 'HIGHEST_ONLY') then perform app.fail('stack_required', 'حدد طريقة الجمع صراحة: جمع المستحقات أو الأعلى فقط (B023)'); end if;
+  if coalesce(v_mode, '') not in ('STACK', 'HIGHEST_ONLY') then perform app.fail('stack_required', 'حدد طريقة الجمع صراحة: جمع المستحقات أو الأعلى فقط (B023)'); end if;
   if v_cond = 'tier' and coalesce(jsonb_array_length(p->'tiers'), 0) = 0 then perform app.fail('required', 'اختر الشرائح المؤهلة'); end if;
   if v_cond = 'metric' and (app.metric_kind(p->>'metric') is null or nullif(p->>'metric_min', '') is null) then
     perform app.fail('required', 'المقياس وحده الأدنى مطلوبان');
   end if;
-  if v_cond not in ('tier', 'metric') then perform app.fail('required', 'نوع الشرط مطلوب'); end if;
+  if coalesce(v_cond, '') not in ('tier', 'metric') then perform app.fail('required', 'نوع الشرط مطلوب'); end if;
   if v_vt = 'fixed' and nullif(p->>'amount', '') is null then perform app.fail('required', 'مبلغ المكافأة مطلوب'); end if;
   if v_vt = 'percent' and (nullif(p->>'pct', '') is null or coalesce(p->>'pct_base', '') not in ('eligible', 'base_commission')) then
     perform app.fail('base_required', 'المكافأة بالنسبة تحتاج نسبة وأساسًا صريحًا (B025)');
   end if;
-  if v_vt not in ('fixed', 'percent') then perform app.fail('required', 'نوع القيمة مطلوب'); end if;
+  if coalesce(v_vt, '') not in ('fixed', 'percent') then perform app.fail('required', 'نوع القيمة مطلوب'); end if;
   if v_group is not null and exists (select 1 from public.reward_plans where month = v_m and status = 'active' and group_name = v_group
                                         and stack_mode <> v_mode and id is distinct from p_id) then
     perform app.fail('group_mode', 'مجموعة التداخل «' || v_group || '» لها طريقة جمع أخرى؛ وحّد الطريقة');
