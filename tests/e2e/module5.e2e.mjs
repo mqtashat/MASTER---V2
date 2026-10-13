@@ -209,7 +209,7 @@ try {
     await page.screenshot({ path: path.join(out, 'm5-spread.png'), fullPage: true });
   });
 
-  await step('هدف تغطية منطقة ونسبة تنوع في محرر الخطة بمعاينة', async () => {
+  await step('هدف تغطية منطقة ونسبة تنوع بأصناف مختارة في محرر الخطة بمعاينة', async () => {
     await page.goto(BASE + '#/goals');
     await page.getByLabel('الشهر').fill(cur.slice(0, 7));
     await page.getByRole('button', { name: 'خطة جديدة' }).click();
@@ -222,6 +222,20 @@ try {
     await dlg.getByRole('button', { name: 'معاينة النتيجة' }).click();
     await dlg.getByText('المعاينة قبل الاعتماد').waitFor();
     await dlg.getByText('المنطقة: الغربية').first().waitFor();
+    // نسبة التنوع: الأصناف تُختار في المحرر واختيارها إلزامي
+    await dlg.getByRole('button', { name: 'إضافة مكوّن' }).first().click();
+    await dlg.getByLabel('المقياس').nth(1).selectOption('variety_ratio');
+    await dlg.getByLabel('الهدف %').nth(1).fill('80');
+    const picker = dlg.getByTestId('variety-products');
+    await picker.getByText('اختر صنفًا واحدًا على الأقل').waitFor();
+    await dlg.getByRole('button', { name: 'معاينة النتيجة' }).click();
+    await dlg.getByText('نسبة التنوع تحتاج قائمة أصناف').waitFor();
+    await picker.getByLabel('بحث الأصناف').fill('A1');
+    await picker.getByRole('button', { name: 'اختيار الظاهر' }).click();
+    await picker.getByText('1 صنف مختار').waitFor();
+    await dlg.getByRole('button', { name: 'معاينة النتيجة' }).click();
+    await dlg.getByText('المعاينة قبل الاعتماد').waitFor();
+    assert.equal(await dlg.getByText('نسبة التنوع تحتاج قائمة أصناف').count(), 0);
     await page.screenshot({ path: path.join(out, 'm5-coverage-goal.png'), fullPage: true });
     await dlg.getByRole('button', { name: 'إغلاق' }).first().click();
   });
