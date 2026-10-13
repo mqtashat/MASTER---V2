@@ -155,3 +155,41 @@ details summary { cursor: pointer; font-size: 13px; font-weight: 600; }
   header.top, .no-print { display: none !important; }
   body { background: #fff; }
 }
+
+/* وحدة الحسابات: اختيار العميل والكشف والذمم */
+.picker { position: relative; }
+.picker-list { position: absolute; inset-inline: 0; top: calc(100% + 2px); z-index: 25; list-style: none; margin: 0; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 6px 18px rgba(0,0,0,.08); max-height: 280px; overflow: auto; }
+.picker-list li { padding: 6px 8px; border-radius: 6px; cursor: pointer; }
+.picker-list li:hover, .picker-list li:focus { background: var(--accent-soft); outline: none; }
+.picked { min-height: 34px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+tr.row-muted td { color: var(--muted); }
+tr.row-hidden td { text-decoration: line-through; opacity: .55; }
+tr.row-overdue td { color: var(--bad); }
+table.inner { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.inner th, table.inner td { padding: 4px 6px; border-bottom: 1px solid var(--line); text-align: start; }
+
+/* وثيقة كشف الحساب (STMT-007، PRINT-001/002) */
+.print-doc { background: #fff; color: #000; padding: 16px; border: 1px solid var(--line); border-radius: var(--r); font-size: 12.5px; }
+.doc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 2px solid #333; padding-bottom: 8px; }
+.doc-company { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.doc-logo { max-height: 64px; max-width: 160px; object-fit: contain; }
+.doc-title { text-align: center; margin: 10px 0 6px; font-size: 15px; }
+.doc-meta { display: grid; gap: 2px; margin-bottom: 8px; }
+.doc-summary, .doc-table { width: 100%; border-collapse: collapse; }
+.doc-summary td { border: 1px solid #999; padding: 6px; text-align: center; width: 25%; }
+.doc-table { margin-top: 8px; }
+.doc-table th, .doc-table td { border: 1px solid #bbb; padding: 3px 5px; text-align: start; }
+.doc-table th { background: #f0f0f0; }
+.doc-table tr { break-inside: avoid; }
+.doc-table thead { display: table-header-group; }
+.doc-total { margin-top: 10px; font-weight: 700; font-size: 14px; text-align: start; }
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body * { visibility: hidden; }
+  .print-doc, .print-doc * { visibility: visible; }
+  .print-doc { position: absolute; inset-inline: 0; top: 0; border: 0; padding: 0; }
+  .overlay { position: static !important; background: none !important; }
+  .modal { box-shadow: none !important; max-height: none !important; overflow: visible !important; }
+  .modal-body { overflow: visible !important; max-height: none !important; }
+}

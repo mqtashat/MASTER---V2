@@ -41,17 +41,41 @@ function General({ editable }: { editable: boolean }) {
   const s = useSettings(ver);
   const [name, setName] = useState('');
   const [header, setHeader] = useState('');
-  const { busy, error, run } = useAction();
+  const [taxNo, setTaxNo] = useState('');
+  const [phone, setPhone] = useState('');
+  const [logo, setLogo] = useState('');
+  const { busy, error, setError, run } = useAction();
   const [saved, setSaved] = useState(false);
-  useEffect(() => { setName((s.company_name as string) ?? ''); setHeader((s.document_header as string) ?? ''); }, [s]);
+  useEffect(() => {
+    setName((s.company_name as string) ?? ''); setHeader((s.document_header as string) ?? '');
+    setTaxNo((s.company_tax_no as string) ?? ''); setPhone((s.company_phone as string) ?? ''); setLogo((s.company_logo as string) ?? '');
+  }, [s]);
+  const pickLogo = (f: File | null) => {
+    if (!f) return;
+    if (f.size > 200 * 1024) { setError('الشعار أكبر من 200 كيلوبايت'); return; }
+    const r = new FileReader();
+    r.onload = () => { setLogo(String(r.result)); setSaved(false); };
+    r.readAsDataURL(f);
+  };
   const save = () => run(async () => {
     await rpc('save_setting', { p_key: 'company_name', p_value: name });
     await rpc('save_setting', { p_key: 'document_header', p_value: header });
+    await rpc('save_setting', { p_key: 'company_tax_no', p_value: taxNo });
+    await rpc('save_setting', { p_key: 'company_phone', p_value: phone });
+    await rpc('save_setting', { p_key: 'company_logo', p_value: logo });
     setSaved(true); setVer(ver + 1);
   });
   return (
     <div className="panel" style={{ display: 'grid', gap: 10, maxWidth: 640 }}>
       <Field label="اسم الشركة"><input value={name} disabled={!editable} onChange={(e) => { setName(e.target.value); setSaved(false); }} /></Field>
+      <div className="grid2">
+        <Field label="الرقم الضريبي"><input value={taxNo} disabled={!editable} onChange={(e) => { setTaxNo(e.target.value); setSaved(false); }} /></Field>
+        <Field label="الهاتف" hint="يظهر في كشف الحساب عند إضافته فقط"><input value={phone} disabled={!editable} onChange={(e) => { setPhone(e.target.value); setSaved(false); }} /></Field>
+      </div>
+      <Field label="شعار الشركة" hint="صورة حتى 200 كيلوبايت تظهر أعلى كشف الحساب المطبوع">
+        <input type="file" accept="image/*" disabled={!editable} onChange={(e) => pickLogo(e.target.files?.[0] ?? null)} /></Field>
+      {logo && <div className="actions" style={{ alignItems: 'center' }}><img src={logo} alt="الشعار الحالي" style={{ maxHeight: 60 }} />
+        {editable && <button className="btn link" onClick={() => { setLogo(''); setSaved(false); }}>إزالة الشعار</button>}</div>}
       <Field label="ترويسة الوثائق المطبوعة" hint="تظهر أعلى كشف الحساب والوثائق؛ أسطر الترويسة وفق PRINT-002">
         <textarea rows={3} value={header} disabled={!editable} onChange={(e) => { setHeader(e.target.value); setSaved(false); }} /></Field>
       {error && <Msg kind="bad">{error}</Msg>}

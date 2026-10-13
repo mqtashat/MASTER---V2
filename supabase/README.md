@@ -2,7 +2,7 @@
 
 ## الملفات
 
-- `migrations/` ملفات الترحيل بالترتيب: `0001_foundation.sql` ثم `0002_users_settings.sql` ثم `0003_definitions.sql` ثم `0004_transactions.sql` (الرفع الموحد والسندات) …
+- `migrations/` ملفات الترحيل بالترتيب: `0001_foundation.sql` ثم `0002_users_settings.sql` ثم `0003_definitions.sql` ثم `0004_transactions.sql` (الرفع الموحد والسندات) ثم `0005_accounts.sql` (الحسابات والكشف) …
 - `schema.sql` ملف واحد مجمّع من الترحيلات بالترتيب نفسه، يُولَّد بالأمر `bash supabase/build_schema.sh` لتطبيقه دفعة واحدة.
 
 ## التطبيق على مشروع Supabase جديد
