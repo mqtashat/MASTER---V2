@@ -18,10 +18,14 @@ export const METRICS: MetricDef[] = [
   { code: 'new_customers', label: 'العملاء الجدد', kind: 'count', hint: 'أول شراء موجب للعميل في النظام كله داخل الفترة (GOAL-012)' },
   { code: 'reactivated', label: 'إعادة التنشيط', kind: 'count', hint: 'لم يشترِ خلال آخر N يومًا قبل الفترة ثم اشترى فيها (GOAL-013)' },
   { code: 'collection_ratio', label: 'التحصيل النسبي %', kind: 'relative', hint: 'تحصيل الشهر ÷ مبيعات الذمم × 100؛ نسبي لا يخفض بالأيام ولا مسار له (GOAL-015)' },
+  { code: 'variety_ratio', label: 'نسبة التنوع %', kind: 'relative', hint: 'الأصناف المختلفة المباعة ببيع موجب ÷ أصناف القائمة × 100؛ القائمة أصناف المكوّن أو كل الأصناف المعرّفة. ضع هدفًا لكل شريحة (مثلًا B 80 وA 90)' },
+  { code: 'coverage', label: 'التغطية %', kind: 'relative', hint: 'من اشترى ببيع موجب من عملاء الموظف في منطقته ÷ كل عملائه فيها × 100؛ المنطقة المختارة أو منطقة الموظف، والعميل بموقعه المحفوظ' },
 ];
+// المقاييس التي تقبل نطاق منطقة (هدف منطقة)
+export const REGION_METRICS = ['net_sales', 'gross_sales', 'quantity', 'customers', 'invoices', 'variety', 'new_customers', 'reactivated', 'collection', 'collection_ratio', 'coverage', 'variety_ratio'];
 export const metricDef = (code: string) => METRICS.find((m) => m.code === code) ?? { code, label: code, kind: 'amount' as Kind, hint: '' };
 
-export interface Filters { products?: number[]; sale_type?: 'all' | 'direct' | 'promo'; pay_type?: 'all' | 'cash' | 'credit'; days?: number | string; basis?: 'collector' | 'invoice_rep' }
+export interface Filters { products?: number[]; sale_type?: 'all' | 'direct' | 'promo'; pay_type?: 'all' | 'cash' | 'credit'; days?: number | string; basis?: 'collector' | 'invoice_rep'; region_id?: number | null }
 
 export interface PlanTier { tier: string; sort: number; logic: 'AND' | 'OR' }
 export interface PlanComponent { tier: string | null; sort: number; metric: string; target: string | number | null; affected: boolean; filters: Filters; label: string | null }
@@ -90,7 +94,7 @@ export function useProducts(): Product[] {
 }
 
 /** وصف نطاق المكوّن المقروء (B005: تعريف ظاهر موحد) */
-export function filtersText(f: Filters, products: Product[]): string {
+export function filtersText(f: Filters, products: Product[], regions: { id: number; name: string }[] = []): string {
   const parts: string[] = [];
   if (f.sale_type === 'direct') parts.push('المباشر فقط');
   if (f.sale_type === 'promo') parts.push('العروض فقط');
@@ -100,6 +104,7 @@ export function filtersText(f: Filters, products: Product[]): string {
   if (f.days) parts.push(`N = ${f.days} يومًا`);
   if (f.basis === 'invoice_rep') parts.push('بأساس مندوب الفاتورة');
   if (f.basis === 'collector') parts.push('بأساس مندوب التحصيل');
+  if (f.region_id) parts.push('المنطقة: ' + (regions.find((r) => r.id === Number(f.region_id))?.name ?? f.region_id));
   return parts.join(' · ');
 }
 
