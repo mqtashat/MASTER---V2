@@ -71,6 +71,7 @@ main { padding-block: 16px 48px; }
 /* فلاتر */
 .filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
 .filters .input { width: auto; min-width: 180px; }
+.filters .check { flex-wrap: wrap; }
 .filters .count { color: var(--muted); font-size: 12.5px; margin-inline-start: auto; }
 
 /* اللوحات والجداول */
@@ -248,3 +249,33 @@ table.inner th, table.inner td { padding: 4px 6px; border-bottom: 1px solid var(
 /* مراحل كشف العمولة */
 .stages td:first-child { width: 34%; }
 .stages tr.total td { border-top: 2px solid #333; }
+
+/* الخرائط (الوحدة 5) */
+.map-wrap { position: relative; isolation: isolate; width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; background: var(--surface-2); }
+.map { position: absolute; inset: 0; direction: ltr; }
+.map-legend { position: absolute; z-index: 500; inset-block-end: 26px; inset-inline-start: 8px; max-width: calc(100% - 16px); max-height: 40%; overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 4px 12px; direction: rtl; }
+.map-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.map-legend i, .swatch { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.2); vertical-align: middle; }
+.map-pop { direction: rtl; font-family: var(--font-body); font-size: 13px; min-width: 200px; }
+.map-pop b { display: block; margin-bottom: 4px; font-family: var(--font-display); }
+.map-pop-links { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.map-pop-links a, .map-pop-links button { color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; font: inherit; text-decoration: underline; }
+.vertex { background: var(--surface); border: 2px solid var(--accent); border-radius: 50%; cursor: grab; }
+.map-split { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; align-items: start; }
+.map-list { max-height: 65vh; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 6px; }
+tr.row-sel td { background: var(--accent-soft); }
+.region-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.region-row:last-child { border-bottom: 0; }
+.multi { position: relative; display: inline-block; }
+.multi-btn { min-width: 160px; text-align: start; cursor: pointer; }
+.multi-pop { min-width: 240px; }
+.multi-list { max-height: 260px; overflow: auto; display: grid; gap: 2px; margin-top: 6px; }
+.cmp-bars { display: grid; gap: 3px; }
+.cmp-bars span { display: block; height: 6px; border-radius: 3px; min-width: 2px; }
+.cmp-bars .a { background: var(--muted); }
+.cmp-bars .b { background: var(--accent); }
+@media (max-width: 760px) {
+  .map-split { grid-template-columns: 1fr; }
+  .map-list { max-height: 50vh; }
+}

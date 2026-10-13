@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "test": "bash local/reset_db.sh && node --test --test-concurrency=1 --test-reporter=spec db/*.test.mjs",
-    "e2e": "bash local/reset_db.sh && node e2e/module1.e2e.mjs && bash local/reset_db.sh && node e2e/module2.e2e.mjs && bash local/reset_db.sh && node e2e/module3.e2e.mjs && bash local/reset_db.sh && node e2e/module4.e2e.mjs",
+    "e2e": "bash local/reset_db.sh && node e2e/module1.e2e.mjs && bash local/reset_db.sh && node e2e/module2.e2e.mjs && bash local/reset_db.sh && node e2e/module3.e2e.mjs && bash local/reset_db.sh && node e2e/module4.e2e.mjs && bash local/reset_db.sh && node e2e/module5.e2e.mjs",
     "e2e:1": "bash local/reset_db.sh && node e2e/module1.e2e.mjs",
     "e2e:2": "bash local/reset_db.sh && node e2e/module2.e2e.mjs",
     "e2e:3": "bash local/reset_db.sh && node e2e/module3.e2e.mjs",
-    "e2e:4": "bash local/reset_db.sh && node e2e/module4.e2e.mjs"
+    "e2e:4": "bash local/reset_db.sh && node e2e/module4.e2e.mjs",
+    "e2e:5": "bash local/reset_db.sh && node e2e/module5.e2e.mjs"
   },
   "dependencies": {
     "pg": "8.13.1"
