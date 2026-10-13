@@ -18,6 +18,13 @@ import { Statement } from './pages/Statement';
 import { Receivables } from './pages/Receivables';
 import { Openings } from './pages/Openings';
 import { Notes } from './pages/Notes';
+import { RepGoals, SupervisorGoals } from './pages/Goals';
+import { CommissionRules } from './pages/CommissionRules';
+import { Rewards } from './pages/Rewards';
+import { Cards } from './pages/Cards';
+import { Commissions } from './pages/Commissions';
+import { Months } from './pages/Months';
+import { Calendar } from './pages/Calendar';
 import { rpc } from './lib/supabase';
 
 export function App() {
@@ -48,7 +55,9 @@ function Gate() {
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
   P01: Home, P02: Customers, P03: Employees, P04: Products, P05: Upload, P06: Transactions,
-  P07: Statement, P08: Receivables, P08a: Openings, P09: Notes, P20: Users, P21: Settings,
+  P07: Statement, P08: Receivables, P08a: Openings, P09: Notes,
+  P10: RepGoals, P10a: SupervisorGoals, P11: CommissionRules, P12: Rewards, P13: Cards, P14: Commissions, P14b: Months,
+  P19: Calendar, P20: Users, P21: Settings,
 };
 
 function Shell() {
