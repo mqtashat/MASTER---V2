@@ -279,3 +279,26 @@ tr.row-sel td { background: var(--accent-soft); }
   .map-split { grid-template-columns: 1fr; }
   .map-list { max-height: 50vh; }
 }
+
+/* التقارير (الوحدة 6) */
+.report-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.report-card { display: grid; gap: 4px; text-align: start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; cursor: pointer; font: inherit; color: var(--fg); min-height: 88px; align-content: start; }
+.report-card b { font-family: var(--font-display); font-size: 15px; color: var(--accent); }
+.report-card:hover, .report-card:focus-visible { border-color: var(--accent); background: var(--accent-soft); }
+.report-card.custom { border-style: dashed; }
+.report-filters { display: grid; gap: 8px; margin-bottom: 12px; }
+.report-filters .filters { margin-bottom: 0; }
+fieldset.chips { border: 1px solid var(--line); border-radius: var(--r); padding: 6px 10px; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 14px; min-width: 0; }
+fieldset.chips legend { font-size: 12.5px; color: var(--muted); padding: 0 4px; }
+.th-sort { background: none; border: 0; padding: 0; font: inherit; font-weight: 600; color: inherit; cursor: pointer; text-align: inherit; }
+.report-head { margin-bottom: 10px; }
+.report-head h2 { margin-bottom: 2px; }
+.report-doc tfoot td { border-top: 2px solid var(--line); background: var(--surface-2); }
+.report-doc caption { caption-side: bottom; padding: 6px; text-align: start; }
+details.defs { margin-top: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 12px; font-size: 13px; }
+details.defs summary { cursor: pointer; font-weight: 600; }
+details.defs ul { margin: 6px 0 0; padding-inline-start: 18px; }
+@media print {
+  .report-doc .tbl { overflow: visible; border: 0; }
+  .report-doc table { font-size: 11px; }
+}
