@@ -30,6 +30,7 @@ import { Locations } from './pages/Locations';
 import { Regions } from './pages/Regions';
 import { Compare } from './pages/Compare';
 import { Spread } from './pages/Spread';
+import { Reports } from './pages/Reports';
 import { rpc } from './lib/supabase';
 
 export function App() {
@@ -62,7 +63,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   P01: Home, P02: Customers, P03: Employees, P04: Products, P05: Upload, P06: Transactions,
   P07: Statement, P08: Receivables, P08a: Openings, P09: Notes,
   P10: RepGoals, P10a: SupervisorGoals, P11: CommissionRules, P12: Rewards, P13: Cards, P14: Commissions, P14b: Months,
-  P15: InvoiceMap, P16: Locations, P17: Regions, P17a: Compare, P17b: Spread,
+  P15: InvoiceMap, P16: Locations, P17: Regions, P17a: Compare, P17b: Spread, P18: Reports,
   P19: Calendar, P20: Users, P21: Settings,
 };
 

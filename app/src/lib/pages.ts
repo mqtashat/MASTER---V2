@@ -24,7 +24,7 @@ export const PAGES: PageDef[] = [
   { code: 'P17', name: 'المناطق والأسواق', module: 'الخرائط', path: '/regions', ready: true },
   { code: 'P17a', name: 'مقارنة الفترات', module: 'الخرائط', path: '/compare', ready: true },
   { code: 'P17b', name: 'انتشار الأصناف', module: 'الخرائط', path: '/spread', ready: true },
-  { code: 'P18', name: 'التقارير', module: 'التقارير', path: '/reports', ready: false },
+  { code: 'P18', name: 'التقارير', module: 'التقارير', path: '/reports', ready: true },
   { code: 'P19', name: 'التقويم', module: 'الإعدادات', path: '/calendar', ready: true },
   { code: 'P20', name: 'المستخدمون والصلاحيات', module: 'الإعدادات', path: '/users', ready: true },
   { code: 'P21', name: 'الإعدادات وسجل العمليات', module: 'الإعدادات', path: '/settings', ready: true },
