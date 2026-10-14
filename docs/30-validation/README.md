@@ -10,3 +10,4 @@
 
 - [حالات القبول](acceptance-cases.md)
 - [الأداء والحمل والاستعادة](performance-and-recovery.md)
+- [نتائج اختبار الحمل والأداء والاسترجاع على 100000 و500000 صف](load-results.md)

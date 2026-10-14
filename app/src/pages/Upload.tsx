@@ -168,11 +168,24 @@ function BatchView({ id, onBack, onChanged }: { id: number; onBack: () => void; 
   const live = batch && batch.status !== 'deleted';
   const eligible = (items ?? []).filter((i) => !i.outcome && ['new', 'changed', 'unchanged'].includes(i.class));
 
+  // الاعتماد على دفعات من 500 سند بطلبات قصيرة مع تقدم ظاهر (B089)؛ إعادة المحاولة بعد الانقطاع
+  // لا تكرر ما اعتمد لأن الخادم يتجاوز السند الذي سبق قراره (D10)
+  const [progress, setProgress] = useState<[number, number] | null>(null);
   const approveCorrect = () => act.run(async () => {
-    const r = await guarded((code) => rpc<Record<string, number>>('upload_resolve', {
-      p_batch: id, p_decisions: eligible.map((i) => ({ id: i.id, action: 'approve', drop_duplicates: i.drop_duplicates })), p_code: code,
-    }));
-    setResult(r); refresh();
+    const decisions = eligible.map((i) => ({ id: i.id, action: 'approve', drop_duplicates: i.drop_duplicates }));
+    const CHUNK = 500;
+    try {
+      const r = await guarded(async (code) => {
+        const total: Record<string, number> = {};
+        for (let i = 0; i < decisions.length; i += CHUNK) {
+          setProgress([i, decisions.length]);
+          const part = await rpc<Record<string, unknown>>('upload_resolve', { p_batch: id, p_decisions: decisions.slice(i, i + CHUNK), p_code: code });
+          for (const [k, v] of Object.entries(part)) if (typeof v === 'number') total[k] = (total[k] ?? 0) + v;
+        }
+        return total;
+      });
+      setResult(r); refresh();
+    } finally { setProgress(null); }
   });
   const recheck = () => act.run(async () => { await rpc('upload_recheck', { p_batch: id }); refresh(); });
 
@@ -225,7 +238,8 @@ function BatchView({ id, onBack, onChanged }: { id: number; onBack: () => void; 
           {live && (
             <div className="actions">
               {can('P05', 'approve') && <button className="btn primary" disabled={!eligible.length || act.busy} onClick={approveCorrect}>
-                {`اعتماد الصحيح (${eligible.length})`}</button>}
+                {progress ? `جارٍ الاعتماد ${progress[0]} من ${progress[1]}…` : `اعتماد الصحيح (${eligible.length})`}</button>}
+              {progress && <progress max={progress[1]} value={progress[0]} aria-label="تقدم الاعتماد" style={{ width: 160 }} />}
               {can('P05', 'import') && batch.awaiting > 0 && <button className="btn" disabled={act.busy} onClick={recheck}>إعادة الفحص</button>}
               <button className="btn" onClick={exportErrors}>تنزيل تقرير الأخطاء</button>
             </div>
