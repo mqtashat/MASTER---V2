@@ -9193,6 +9193,7 @@ create trigger upload_batches_analyze after update of status on public.upload_ba
 -- ---------------------------------------------------------------------
 alter role authenticated set statement_timeout = '120s';
 notify pgrst, 'reload config';
+notify pgrst, 'reload schema';
 
 -- إتاحة دالة النطاق للسياسات
 create or replace function app.apply_grants() returns void
