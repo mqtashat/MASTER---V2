@@ -10,7 +10,10 @@
     "e2e:3": "bash local/reset_db.sh && node e2e/module3.e2e.mjs",
     "e2e:4": "bash local/reset_db.sh && node e2e/module4.e2e.mjs",
     "e2e:5": "bash local/reset_db.sh && node e2e/module5.e2e.mjs",
-    "e2e:6": "bash local/reset_db.sh && node e2e/module6.e2e.mjs"
+    "e2e:6": "bash local/reset_db.sh && node e2e/module6.e2e.mjs",
+    "load:100k": "node load/load.mjs --rows 100000 --months 7 --out load/out/load-100k.json",
+    "load:500k": "node load/load.mjs --rows 500000 --months 10 --out load/out/load-500k.json",
+    "load:report": "node load/report.mjs load/out/load-100k.json load/out/load-500k.json"
   },
   "dependencies": {
     "pg": "8.13.1"
