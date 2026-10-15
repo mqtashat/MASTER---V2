@@ -9313,32 +9313,41 @@ do $$
 declare v_src text;
 begin
   -- commission_month: يُستبدل مصدر أعضاء القاعدة بالمرئيين فقط مع عدد المخفيين
-  select pg_get_functiondef('public.commission_month(date)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'rules', coalesce((select jsonb_agg(app.rule_json(r.id) order by r.name) from public.commission_rules r where r.month = v_m), '[]'),$q$,
-    $q$'rules', coalesce((select jsonb_agg(j || jsonb_build_object('members', app.visible_members(j->'members'),
-                         'hidden_members', jsonb_array_length(j->'members') - jsonb_array_length(app.visible_members(j->'members'))) order by r.name)
-                         from public.commission_rules r cross join lateral app.rule_json(r.id) j where r.month = v_m), '[]'),$q$);
-  if v_src not like '%hidden_members%' then raise exception 'commission_month: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('public.commission_month(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'hidden_members') = 0 then
+    v_src := replace(v_src,
+      $q$'rules', coalesce((select jsonb_agg(app.rule_json(r.id) order by r.name) from public.commission_rules r where r.month = v_m), '[]'),$q$,
+      $q$'rules', coalesce((select jsonb_agg(j || jsonb_build_object('members', app.visible_members(j->'members'),
+                           'hidden_members', jsonb_array_length(j->'members') - jsonb_array_length(app.visible_members(j->'members'))) order by r.name)
+                           from public.commission_rules r cross join lateral app.rule_json(r.id) j where r.month = v_m), '[]'),$q$);
+    if v_src not like '%hidden_members%' then raise exception 'commission_month: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 
   -- rewards_list: أسماء المشمولين ضمن النطاق وعدد من خارجه
-  select pg_get_functiondef('public.rewards_list(date)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'employee_names', (select jsonb_agg(name) from public.employees where id = any(rp.employees))$q$,
-    $q$'employee_names', (select jsonb_agg(name order by name) from public.employees where id = any(rp.employees) and app.can_see_employee(id)),
-                         'hidden_employees', (select count(*) from public.employees where id = any(rp.employees) and not app.can_see_employee(id))$q$);
-  if v_src not like '%hidden_employees%' then raise exception 'rewards_list: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('public.rewards_list(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'hidden_employees') = 0 then
+    v_src := replace(v_src,
+      $q$'employee_names', (select jsonb_agg(name) from public.employees where id = any(rp.employees))$q$,
+      $q$'employee_names', (select jsonb_agg(name order by name) from public.employees where id = any(rp.employees) and app.can_see_employee(id)),
+                           'hidden_employees', (select count(*) from public.employees where id = any(rp.employees) and not app.can_see_employee(id))$q$);
+    if v_src not like '%hidden_employees%' then raise exception 'rewards_list: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 
   -- team_target: حصة المندوب خارج النطاق تبقى في المجموع دون اسمه ورقمه
-  select pg_get_functiondef('app.team_target(bigint, date, text, text)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'name', (select name from public.employees where id = r.employee_id),$q$,
-    $q$'name', case when app.can_see_employee(r.employee_id) then (select name from public.employees where id = r.employee_id) end,
-        'hidden', not app.can_see_employee(r.employee_id),$q$);
-  if v_src not like '%''hidden''%' then raise exception 'team_target: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('app.team_target(bigint, date, text, text)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, '''hidden''') = 0 then
+    v_src := replace(v_src,
+      $q$'name', (select name from public.employees where id = r.employee_id),$q$,
+      $q$'name', case when app.can_see_employee(r.employee_id) then (select name from public.employees where id = r.employee_id) end,
+          'hidden', not app.can_see_employee(r.employee_id),$q$);
+    if v_src not like '%''hidden''%' then raise exception 'team_target: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 end $$;
 
 select app.apply_grants();
@@ -9378,40 +9387,55 @@ do $$
 declare v_src text; v_new text;
 begin
   -- الشريحة المعتمدة للشهر المغلق
-  select pg_get_functiondef('app.eff_tier(bigint, date)'::regprocedure) into v_src;
-  v_new := replace(v_src, 'order by s.version desc limit 1', 'and s.version = app.month_version(p_month)');
-  if v_new = v_src then raise exception 'eff_tier: نص غير مطابق'; end if;
-  execute v_new;
+  select replace(pg_get_functiondef('app.eff_tier(bigint, date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.month_version') = 0 then
+    v_new := replace(v_src, 'order by s.version desc limit 1', 'and s.version = app.month_version(p_month)');
+    if v_new = v_src then raise exception 'eff_tier: نص غير مطابق'; end if;
+    execute v_new;
+  end if;
 
   -- قائمة الأهداف
-  select pg_get_functiondef('public.goals_list(date, text, jsonb)'::regprocedure) into v_src;
-  v_new := replace(v_src,
-    $q$(select s.card->'eval' from public.month_snapshots s where s.month = v_m and s.employee_id = r.id order by s.version desc limit 1)$q$,
-    $q$(select app.mask_eval(s.card->'eval') from public.month_snapshots s where s.month = v_m and s.employee_id = r.id and s.version = app.month_version(v_m))$q$);
-  if v_new = v_src then raise exception 'goals_list: نص غير مطابق'; end if;
-  execute v_new;
+  select replace(pg_get_functiondef('public.goals_list(date, text, jsonb)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.mask_eval') = 0 then
+    v_new := replace(v_src,
+      $q$(select s.card->'eval' from public.month_snapshots s where s.month = v_m and s.employee_id = r.id order by s.version desc limit 1)$q$,
+      $q$(select app.mask_eval(s.card->'eval') from public.month_snapshots s where s.month = v_m and s.employee_id = r.id and s.version = app.month_version(v_m))$q$);
+    if v_new = v_src then raise exception 'goals_list: نص غير مطابق'; end if;
+    execute v_new;
+  end if;
 
   -- المكافآت ومستوفوها
-  select pg_get_functiondef('public.rewards_list(date)'::regprocedure) into v_src;
-  v_new := replace(v_src, 'and s.employee_id = e order by version desc limit 1', 'and s.employee_id = e and s.version = app.month_version(v_m)');
-  if v_new = v_src then raise exception 'rewards_list: نص غير مطابق'; end if;
-  execute v_new;
+  select replace(pg_get_functiondef('public.rewards_list(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.month_version') = 0 then
+    v_new := replace(v_src, 'and s.employee_id = e order by version desc limit 1', 'and s.employee_id = e and s.version = app.month_version(v_m)');
+    if v_new = v_src then raise exception 'rewards_list: نص غير مطابق'; end if;
+    execute v_new;
+  end if;
 
   -- بطاقات الأداء
-  select pg_get_functiondef('public.performance_cards(date, jsonb)'::regprocedure) into v_src;
-  v_new := replace(v_src,
-    $q$select s.card into v_card from public.month_snapshots s where s.month = v_m and s.employee_id = r.id order by s.version desc limit 1;$q$,
-    $q$select s.card into v_card from public.month_snapshots s where s.month = v_m and s.employee_id = r.id and s.version = app.month_version(v_m);$q$);
-  v_new := replace(v_new, $q$v_card := v_card || '{"snapshot": true}';$q$,
-    $q$v_card := jsonb_set(v_card || '{"snapshot": true}', '{eval}', coalesce(app.mask_eval(v_card->'eval'), 'null'));$q$);
-  if v_new not like '%app.month_version(v_m);%' or v_new not like '%mask_eval%' then raise exception 'performance_cards: نص غير مطابق'; end if;
-  execute v_new;
+  select replace(pg_get_functiondef('public.performance_cards(date, jsonb)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.mask_eval') = 0 then
+    v_new := replace(v_src,
+      $q$select s.card into v_card from public.month_snapshots s where s.month = v_m and s.employee_id = r.id order by s.version desc limit 1;$q$,
+      $q$select s.card into v_card from public.month_snapshots s where s.month = v_m and s.employee_id = r.id and s.version = app.month_version(v_m);$q$);
+    v_new := replace(v_new, $q$v_card := v_card || '{"snapshot": true}';$q$,
+      $q$v_card := jsonb_set(v_card || '{"snapshot": true}', '{eval}', coalesce(app.mask_eval(v_card->'eval'), 'null'));$q$);
+    if v_new not like '%app.month_version(v_m);%' or v_new not like '%mask_eval%' then raise exception 'performance_cards: نص غير مطابق'; end if;
+    execute v_new;
+  end if;
 
   -- ملخص العمولات
-  select pg_get_functiondef('public.commission_summary(date)'::regprocedure) into v_src;
-  v_new := replace(v_src, 'and s.employee_id = e order by s.version desc limit 1', 'and s.employee_id = e and s.version = app.month_version(v_m)');
-  if v_new = v_src then raise exception 'commission_summary: نص غير مطابق'; end if;
-  execute v_new;
+  select replace(pg_get_functiondef('public.commission_summary(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.month_version') = 0 then
+    v_new := replace(v_src, 'and s.employee_id = e order by s.version desc limit 1', 'and s.employee_id = e and s.version = app.month_version(v_m)');
+    if v_new = v_src then raise exception 'commission_summary: نص غير مطابق'; end if;
+    execute v_new;
+  end if;
 end $$;
 
 -- كشف الموظف: النسخة المطلوبة أو النسخة الحالية للشهر المغلق؛ لا حساب حي لشهر مغلق
@@ -9551,39 +9575,42 @@ end $$;
 do $$
 declare v_src text; v_new text; v_paid text; i int; j int;
 begin
-  select pg_get_functiondef('app.commission_calc(bigint, date)'::regprocedure) into v_src;
+  select replace(pg_get_functiondef('app.commission_calc(bigint, date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'app.carry_allocs') = 0 then
 
-  -- 1) المسدد: نسخة ثانية من استعلام المسدد مصدرها التسديدات المرحّلة
-  i := strpos(v_src, '  insert into _cm (source, part, doc_id, doc_kind, doc_number, doc_date, customer_id, rep_id, product_id, value, paid, inv_month)');
-  j := strpos(v_src, 'and t.v <> 0;');
-  if i = 0 or j = 0 or j < i then raise exception 'commission_calc: موضع المسدد غير مطابق'; end if;
-  v_paid := substr(v_src, i, j - i + length('and t.v <> 0;'));
-  if strpos(v_paid, '    from app.ledger_allocs a') = 0 then raise exception 'commission_calc: مصدر المسدد غير مطابق'; end if;
-  v_new := substr(v_src, 1, j + length('and t.v <> 0;') - 1)
-        || E'\n\n  -- المسدد من ذمم السنة السابقة المرحّلة افتتاحيًا (A1، COMM-008)\n'
-        || replace(v_paid, '    from app.ledger_allocs a', '    from app.carry_allocs(v_m, v_e) a')
-        || substr(v_src, j + length('and t.v <> 0;'));
+    -- 1) المسدد: نسخة ثانية من استعلام المسدد مصدرها التسديدات المرحّلة
+    i := strpos(v_src, '  insert into _cm (source, part, doc_id, doc_kind, doc_number, doc_date, customer_id, rep_id, product_id, value, paid, inv_month)');
+    j := strpos(v_src, 'and t.v <> 0;');
+    if i = 0 or j = 0 or j < i then raise exception 'commission_calc: موضع المسدد غير مطابق'; end if;
+    v_paid := substr(v_src, i, j - i + length('and t.v <> 0;'));
+    if strpos(v_paid, '    from app.ledger_allocs a') = 0 then raise exception 'commission_calc: مصدر المسدد غير مطابق'; end if;
+    v_new := substr(v_src, 1, j + length('and t.v <> 0;') - 1)
+          || E'\n\n  -- المسدد من ذمم السنة السابقة المرحّلة افتتاحيًا (A1، COMM-008)\n'
+          || replace(v_paid, '    from app.ledger_allocs a', '    from app.carry_allocs(v_m, v_e) a')
+          || substr(v_src, j + length('and t.v <> 0;'));
 
-  -- 2) تحصيل الافتتاحي: الافتتاحي غير المرحّل، وما لم يُربط ببند فاتورة من المرحّل
-  v_src := v_new;
-  v_new := replace(v_src,
-    E'      from app.ledger_allocs a\n     where a.debt_key like ''open:%'' and a.alloc_date between v_m and v_e',
-    E'      from (select a0.debt_key, a0.debt_account, a0.amount, a0.alloc_date from app.ledger_allocs a0\n'
-    || E'             where a0.debt_key like ''open:%'' and a0.alloc_date between v_m and v_e and not app.is_carry(a0.debt_account, a0.alloc_date)\n'
-    || E'            union all\n'
-    || E'            select c.debt_key, c.debt_account, c.amount, c.alloc_date from app.carry_allocs(v_m, v_e) c where c.debt_key like ''open:%'') a\n'
-    || E'     where true');
-  if v_new = v_src then raise exception 'commission_calc: موضع الافتتاحي غير مطابق'; end if;
+    -- 2) تحصيل الافتتاحي: الافتتاحي غير المرحّل، وما لم يُربط ببند فاتورة من المرحّل
+    v_src := v_new;
+    v_new := replace(v_src,
+      E'      from app.ledger_allocs a\n     where a.debt_key like ''open:%'' and a.alloc_date between v_m and v_e',
+      E'      from (select a0.debt_key, a0.debt_account, a0.amount, a0.alloc_date from app.ledger_allocs a0\n'
+      || E'             where a0.debt_key like ''open:%'' and a0.alloc_date between v_m and v_e and not app.is_carry(a0.debt_account, a0.alloc_date)\n'
+      || E'            union all\n'
+      || E'            select c.debt_key, c.debt_account, c.amount, c.alloc_date from app.carry_allocs(v_m, v_e) c where c.debt_key like ''open:%'') a\n'
+      || E'     where true');
+    if v_new = v_src then raise exception 'commission_calc: موضع الافتتاحي غير مطابق'; end if;
 
-  -- 3) المؤجل: المسدد من الفاتورة يشمل التسديدات المرحّلة
-  v_src := v_new;
-  v_new := replace(v_src,
-    $q$left join lateral (select sum(a.amount) v from app.ledger_allocs a where a.debt_key = 'doc:' || d.id and a.alloc_date <= v_e) pd on true$q$,
-    $q$left join lateral (select coalesce((select sum(a.amount) from app.ledger_allocs a where a.debt_key = 'doc:' || d.id and a.alloc_date <= v_e), 0)
-                             + coalesce((select sum(c.amount) from app.carry_allocs(make_date(extract(year from v_e)::int, 1, 1), v_e) c
-                                          where c.debt_key = 'doc:' || d.id), 0) v) pd on true$q$);
-  if v_new = v_src then raise exception 'commission_calc: موضع المؤجل غير مطابق'; end if;
-  execute v_new;
+    -- 3) المؤجل: المسدد من الفاتورة يشمل التسديدات المرحّلة
+    v_src := v_new;
+    v_new := replace(v_src,
+      $q$left join lateral (select sum(a.amount) v from app.ledger_allocs a where a.debt_key = 'doc:' || d.id and a.alloc_date <= v_e) pd on true$q$,
+      $q$left join lateral (select coalesce((select sum(a.amount) from app.ledger_allocs a where a.debt_key = 'doc:' || d.id and a.alloc_date <= v_e), 0)
+                               + coalesce((select sum(c.amount) from app.carry_allocs(make_date(extract(year from v_e)::int, 1, 1), v_e) c
+                                            where c.debt_key = 'doc:' || d.id), 0) v) pd on true$q$);
+    if v_new = v_src then raise exception 'commission_calc: موضع المؤجل غير مطابق'; end if;
+    execute v_new;
+  end if;
 end $$;
 
 select app.apply_grants();

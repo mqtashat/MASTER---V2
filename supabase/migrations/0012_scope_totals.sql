@@ -83,32 +83,41 @@ do $$
 declare v_src text;
 begin
   -- commission_month: يُستبدل مصدر أعضاء القاعدة بالمرئيين فقط مع عدد المخفيين
-  select pg_get_functiondef('public.commission_month(date)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'rules', coalesce((select jsonb_agg(app.rule_json(r.id) order by r.name) from public.commission_rules r where r.month = v_m), '[]'),$q$,
-    $q$'rules', coalesce((select jsonb_agg(j || jsonb_build_object('members', app.visible_members(j->'members'),
-                         'hidden_members', jsonb_array_length(j->'members') - jsonb_array_length(app.visible_members(j->'members'))) order by r.name)
-                         from public.commission_rules r cross join lateral app.rule_json(r.id) j where r.month = v_m), '[]'),$q$);
-  if v_src not like '%hidden_members%' then raise exception 'commission_month: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('public.commission_month(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'hidden_members') = 0 then
+    v_src := replace(v_src,
+      $q$'rules', coalesce((select jsonb_agg(app.rule_json(r.id) order by r.name) from public.commission_rules r where r.month = v_m), '[]'),$q$,
+      $q$'rules', coalesce((select jsonb_agg(j || jsonb_build_object('members', app.visible_members(j->'members'),
+                           'hidden_members', jsonb_array_length(j->'members') - jsonb_array_length(app.visible_members(j->'members'))) order by r.name)
+                           from public.commission_rules r cross join lateral app.rule_json(r.id) j where r.month = v_m), '[]'),$q$);
+    if v_src not like '%hidden_members%' then raise exception 'commission_month: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 
   -- rewards_list: أسماء المشمولين ضمن النطاق وعدد من خارجه
-  select pg_get_functiondef('public.rewards_list(date)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'employee_names', (select jsonb_agg(name) from public.employees where id = any(rp.employees))$q$,
-    $q$'employee_names', (select jsonb_agg(name order by name) from public.employees where id = any(rp.employees) and app.can_see_employee(id)),
-                         'hidden_employees', (select count(*) from public.employees where id = any(rp.employees) and not app.can_see_employee(id))$q$);
-  if v_src not like '%hidden_employees%' then raise exception 'rewards_list: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('public.rewards_list(date)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, 'hidden_employees') = 0 then
+    v_src := replace(v_src,
+      $q$'employee_names', (select jsonb_agg(name) from public.employees where id = any(rp.employees))$q$,
+      $q$'employee_names', (select jsonb_agg(name order by name) from public.employees where id = any(rp.employees) and app.can_see_employee(id)),
+                           'hidden_employees', (select count(*) from public.employees where id = any(rp.employees) and not app.can_see_employee(id))$q$);
+    if v_src not like '%hidden_employees%' then raise exception 'rewards_list: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 
   -- team_target: حصة المندوب خارج النطاق تبقى في المجموع دون اسمه ورقمه
-  select pg_get_functiondef('app.team_target(bigint, date, text, text)'::regprocedure) into v_src;
-  v_src := replace(v_src,
-    $q$'name', (select name from public.employees where id = r.employee_id),$q$,
-    $q$'name', case when app.can_see_employee(r.employee_id) then (select name from public.employees where id = r.employee_id) end,
-        'hidden', not app.can_see_employee(r.employee_id),$q$);
-  if v_src not like '%''hidden''%' then raise exception 'team_target: نص الاستبدال غير مطابق'; end if;
-  execute v_src;
+  select replace(pg_get_functiondef('app.team_target(bigint, date, text, text)'::regprocedure), E'\r', '') into v_src;
+  -- يُتجاوز إن طُبّق سابقًا، فيمكن إعادة تشغيل الملف
+  if strpos(v_src, '''hidden''') = 0 then
+    v_src := replace(v_src,
+      $q$'name', (select name from public.employees where id = r.employee_id),$q$,
+      $q$'name', case when app.can_see_employee(r.employee_id) then (select name from public.employees where id = r.employee_id) end,
+          'hidden', not app.can_see_employee(r.employee_id),$q$);
+    if v_src not like '%''hidden''%' then raise exception 'team_target: نص الاستبدال غير مطابق'; end if;
+    execute v_src;
+  end if;
 end $$;
 
 select app.apply_grants();
