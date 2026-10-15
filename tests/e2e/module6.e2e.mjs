@@ -110,7 +110,6 @@ try {
 
   await step('الدخول وبطاقات التقارير الثمانية والمخصص', async () => {
     await login(page);
-    await page.getByRole('button', { name: 'التقارير', exact: true }).click();
     await page.getByRole('link', { name: 'التقارير', exact: true }).click();
     await page.getByRole('heading', { name: 'التقارير' }).waitFor();
     assert.equal(await page.locator('.report-card').count(), 9);

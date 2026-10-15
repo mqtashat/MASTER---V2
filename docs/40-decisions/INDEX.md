@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-15 | [الشريط الجانبي ومواقع العملاء في صفحة العملاء — 15/10/2026](rounds/2026-10-15-sidebar-customer-locations.md) | 3 |
 | 2026-10-11 | [طريقة التسليم وبدء البناء — 11/10/2026](rounds/2026-10-11-build-delivery.md) | 2 |
 | 2026-10-11 | [فحص شهر 1/2026 الحقيقي — 11/10/2026](rounds/2026-10-11-january-2026-sample.md) | 5 |
 | 2026-10-11 | [هيكل المشروع والمنصة — 11/10/2026](rounds/2026-10-11-build-structure.md) | 2 |
@@ -157,6 +158,7 @@
 
 | المعرّف | الوصف | الموضع |
 |---|---|---|
+| CUS-004 | استيراد مواقع العملاء وتصديرها من صفحة العملاء بأعمدة ملف المواقع، وتنبيه الإحداثيات المعكوسة | [2026-10-15-sidebar-customer-locations](rounds/2026-10-15-sidebar-customer-locations.md) |
 | CUS-002 | CompanyID يبقى في ملف تصدير العملاء غير مفعّل | [2026-10-10-customers](rounds/2026-10-10-customers.md) |
 | CUS-003 | رقم الرئيسي الفارغ = مستقل؛ اختلاف الاسم يعتمد سجل الرئيسي مع تنبيه | [2026-10-10-customers](rounds/2026-10-10-customers.md) |
 | CUS-001 | الاستيراد والتصدير من صفحة العملاء ضمن وحدة البيانات. | [03-customers](../10-spec/03-customers.md)، [integration-review](../60-reference/integration-review.md) |
@@ -436,6 +438,7 @@
 | UX-004 | دعم الهاتف كتجربة أساسية ومقاسات الاختبار ومتصفحاته | [2026-10-08-reports-calendar-permissions-mobile](rounds/2026-10-08-reports-calendar-permissions-mobile.md) |
 | UX-005 | تنظيم صفحات الخرائط ونافذة النقطة وتجميع النقاط ونوع الخريطة | [2026-10-08-maps-ux](rounds/2026-10-08-maps-ux.md) |
 | UX-006 | عرض السند المعلّق وتصحيحه في الرفع الموحد | [2026-10-07-preview-review](rounds/2026-10-07-preview-review.md) |
+| UX-008 | شريط جانبي ثابت بكل الوحدات وصفحاتها بدل الشريط العلوي؛ درج على الهاتف | [2026-10-15-sidebar-customer-locations](rounds/2026-10-15-sidebar-customer-locations.md) |
 | UX-007 | اعتماد التصميم البصري للمعاينة مرجعًا لبقية الصفحات | [2026-10-11-visual-design](rounds/2026-10-11-visual-design.md) |
 |---|---|---|
 | UX-001 | كثافة منظمة ومظهر فاتح | [2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review](rounds/2026-10-07-v0.1.64-ux-print-upload-map-goal-ret-comm-review.md) |

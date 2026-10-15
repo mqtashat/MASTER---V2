@@ -112,7 +112,6 @@ try {
 
   await step('الدخول وظهور صفحات الأهداف والعمولات والتقويم في القائمة', async () => {
     await login(page);
-    await page.getByRole('button', { name: 'الأهداف والعمولات' }).click();
     for (const n of ['أهداف المندوبين', 'أهداف المشرفين', 'قواعد العمولة', 'المكافآت', 'بطاقات الأداء', 'كشف العمولات', 'الأشهر والإغلاق']) {
       await page.getByRole('link', { name: n, exact: true }).waitFor();
     }

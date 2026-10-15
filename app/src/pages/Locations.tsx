@@ -131,7 +131,8 @@ function PickOnMap({ points, onPick }: { points: MapPoint[]; onPick: (lat: numbe
 interface ImpRow { row: number; customer_number: string; name: string | null; name_src: string | null; kind: string; message: string | null; old_lat: string | null; old_lng: string | null; lat: string | null; lng: string | null }
 const KIND_LABEL: Record<string, string> = { new: 'جديد', changed: 'متغير', same: 'بلا تغيير', blank: 'فارغ — لا يمحو', error: 'خطأ' };
 
-function ImportLocations({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
+// يُستعمل أيضًا من صفحة العملاء (CUS-004)
+export function ImportLocations({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
   const [rows, setRows] = useState<Record<string, string>[] | null>(null);
   const [pv, setPv] = useState<{ counts: Record<string, number>; rows: ImpRow[] } | null>(null);
   const [done, setDone] = useState(false);
@@ -140,12 +141,14 @@ function ImportLocations({ onClose, onDone }: { onClose: () => void; onDone: () 
   const read = (file: File) => run(async () => {
     const s = await readSheet(file);
     if (!s.headers.some((h) => ['رقم العميل', 'CustomerNumber'].includes(h))) { setError('أعمدة القالب: رقم العميل، اسم العميل، خط العرض، خط الطول'); return; }
-    const r = s.rows.map((x) => ({ row: String(x.row), customer_number: pick(x.cells, 'رقم العميل', 'CustomerNumber'), name: pick(x.cells, 'اسم العميل', 'Customername'),
+    const r = s.rows.map((x) => ({ row: String(x.row), customer_number: pick(x.cells, 'رقم العميل', 'CustomerNumber'), name: pick(x.cells, 'اسم العميل', 'إسم العميل', 'Customername'),
       lat: pick(x.cells, 'خط العرض', 'Latitude'), lng: pick(x.cells, 'خط الطول', 'Longitude') }));
     setRows(r);
     setPv(await rpc('import_customer_locations', { p_rows: r, p_commit: false }));
   });
   const commit = () => run(async () => { await rpc('import_customer_locations', { p_rows: rows, p_commit: true }); setDone(true); });
+  // تنبيه فقط دون تبديل (CUS-004): خط العرض أكبر من خط الطول يدل غالبًا على عمودين معكوسين في الملف
+  const swapped = new Set((pv?.rows ?? []).filter((r) => r.lat !== null && r.lng !== null && Number(r.lat) > Number(r.lng)).map((r) => r.row));
   const template = () => writeSheet('قالب مواقع العملاء.xlsx', 'المواقع', ['رقم العميل', 'اسم العميل', 'خط العرض', 'خط الطول'], []);
   return (
     <Modal wide title="استيراد مواقع العملاء" onClose={onClose} footer={done ? <button className="btn primary" onClick={onDone}>تم</button> : <>
@@ -156,12 +159,13 @@ function ImportLocations({ onClose, onDone }: { onClose: () => void; onDone: () 
       {!done && <input type="file" accept=".xlsx,.xls" aria-label="ملف المواقع" onChange={(e) => e.target.files?.[0] && read(e.target.files[0])} />}
       {pv && (
         <>
+          {swapped.size > 0 && <Msg kind="warn">يبدو أن خط العرض وخط الطول معكوسان في {swapped.size} صفًا؛ راجع الملف قبل الاعتماد.</Msg>}
           <div className="actions">{Object.entries(pv.counts).map(([k, v]) => <Badge key={k} kind={k === 'error' ? 'bad' : k === 'new' || k === 'changed' ? 'ok' : undefined}>{KIND_LABEL[k]}: {v}</Badge>)}</div>
           <div className="tbl" style={{ maxHeight: 360 }}><table>
             <thead><tr><th>الصف</th><th>العميل</th><th>الحالة</th><th>الحالي</th><th>الجديد</th><th>ملاحظة</th></tr></thead>
             <tbody>{pv.rows.map((r) => (
               <tr key={r.row} className={r.kind === 'error' ? 'zero' : r.kind === 'same' || r.kind === 'blank' ? 'row-muted' : ''}>
-                <td className="num">{r.row}</td><td>{r.customer_number} — {r.name ?? r.name_src}</td><td>{KIND_LABEL[r.kind]}</td>
+                <td className="num">{r.row}</td><td>{r.customer_number} — {r.name ?? r.name_src}</td><td>{KIND_LABEL[r.kind]}{swapped.has(r.row) && <> <Badge kind="warn">معكوس؟</Badge></>}</td>
                 <td className="num">{r.old_lat ? `${r.old_lat}, ${r.old_lng}` : ''}</td><td className="num">{r.lat ? `${r.lat}, ${r.lng}` : ''}</td><td className="wrap">{r.message}</td></tr>
             ))}</tbody></table></div>
         </>

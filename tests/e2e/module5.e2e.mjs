@@ -103,7 +103,6 @@ try {
 
   await step('الدخول وظهور صفحات الخرائط الخمس في القائمة', async () => {
     await login(page);
-    await page.getByRole('button', { name: 'الخرائط' }).click();
     for (const n of ['خريطة الفواتير والمسار', 'مواقع العملاء', 'المناطق والأسواق', 'مقارنة الفترات', 'انتشار الأصناف']) {
       await page.getByRole('link', { name: n, exact: true }).waitFor();
     }
@@ -137,6 +136,36 @@ try {
     await page.getByRole('tab', { name: 'الكل' }).click();
     await page.getByText('4 عميل · 4 على الخريطة · 0 بلا موقع صالح').waitFor();
     await page.screenshot({ path: path.join(out, 'm5-locations.png'), fullPage: true });
+  });
+
+  await step('صفحة العملاء: تصدير المواقع بأعمدة ملف المواقع، واستيراده بتنبيه الإحداثيات المعكوسة (CUS-004)', async () => {
+    await page.goto(BASE + '#/customers');
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'تصدير المواقع' }).click()]);
+    const wb = XLSX.read(fs.readFileSync(await dl.path()));
+    assert.equal(wb.SheetNames[0], 'مواقع العملاء');
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+    assert.deepEqual(rows[0], ['خط العرض', 'خط الطول', 'إسم العميل', 'رقم العميل']);
+    assert.deepEqual(rows.slice(1).map((r) => [r[0], r[1], String(r[3])]),
+      [[31.5, 35.5, '500'], [31.5, 36.5, '501'], [31.6, 36.6, '502'], [31.4, 35.4, '503']]);
+    // الملف المصدَّر يُعاد استيراده كما هو: كل الصفوف بلا تغيير
+    const back = path.join(out, 'locations-export.xlsx');
+    fs.writeFileSync(back, fs.readFileSync(await dl.path()));
+    await page.getByRole('button', { name: 'استيراد المواقع' }).click();
+    await dialog().getByLabel('ملف المواقع').setInputFiles(back);
+    await dialog().getByText('بلا تغيير: 4').waitFor();
+    assert.equal(await dialog().getByText(/معكوسان/).count(), 0);
+    await dialog().getByRole('button', { name: 'إلغاء' }).click();
+    // ملف بالقيمتين معكوستين: تنبيه وشارة فقط، دون تبديل أو منع
+    const rev = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(rev, XLSX.utils.aoa_to_sheet([['خط العرض', 'خط الطول', 'إسم العميل', 'رقم العميل'], ['35.9', '31.9', 'بقالة', '500']]), 'مواقع العملاء');
+    XLSX.writeFile(rev, path.join(out, 'locations-reversed.xlsx'));
+    await page.getByRole('button', { name: 'استيراد المواقع' }).click();
+    await dialog().getByLabel('ملف المواقع').setInputFiles(path.join(out, 'locations-reversed.xlsx'));
+    await dialog().getByText('يبدو أن خط العرض وخط الطول معكوسان في 1 صفًا؛ راجع الملف قبل الاعتماد.').waitFor();
+    await dialog().getByText('معكوس؟').waitFor();
+    await dialog().getByText('35.9, 31.9').waitFor();
+    await page.screenshot({ path: path.join(out, 'm5-customers-locations.png'), fullPage: true });
+    await dialog().getByRole('button', { name: 'إلغاء' }).click();
   });
 
   await step('المناطق: نقطة بالنقر على الخريطة، ثم حدود من GeoJSON، معاينة المتأثرين وحفظ', async () => {

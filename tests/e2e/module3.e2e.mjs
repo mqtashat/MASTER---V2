@@ -104,7 +104,6 @@ try {
     await page.getByLabel('كلمة المرور', { exact: true }).fill('Admin#2026');
     await page.getByRole('button', { name: 'دخول' }).click();
     await page.getByRole('heading', { name: 'الرئيسية' }).waitFor();
-    await page.getByRole('button', { name: 'الحسابات' }).click();
     for (const n of ['كشف حساب العميل', 'الذمم الحالية', 'الافتتاحيات والإغلاق السنوي', 'الإشعارات المدينة والدائنة']) {
       await page.getByRole('link', { name: n, exact: true }).waitFor();
     }
