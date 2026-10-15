@@ -86,7 +86,7 @@ function Shell() {
         <Link to={start} className="brand">ماستر</Link>
       </div>
       {menu && <div className="scrim no-print" onClick={() => setMenu(false)} />}
-      <aside id="side-nav" className="sidebar no-print">
+      <aside id="side-nav" className="sidebar no-print" onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setMenu(false); }}>
         <div className="side-head"><Link to={start} className="brand">ماستر</Link></div>
         <nav className="side-scroll" aria-label="القائمة الرئيسية">
           {can('P01') && <NavLink className="side-link" to="/" end>الرئيسية</NavLink>}
