@@ -8,6 +8,7 @@
 
 | التاريخ | الجولة | الملفات المتأثرة |
 |---|---|---|
+| 2026-10-15 | [إضافات الأهداف والعمولات بعد التدقيق والمقارنة — 15/10/2026](rounds/2026-10-15-goals-commissions-additions.md) | 2 |
 | 2026-10-15 | [طريقة التعديل بعد النشر، وتعديل الموقع من الخريطة — 15/10/2026](rounds/2026-10-15-ai-studio-workflow-map-edit.md) | 2 |
 | 2026-10-15 | [الشريط الجانبي ومواقع العملاء في صفحة العملاء — 15/10/2026](rounds/2026-10-15-sidebar-customer-locations.md) | 3 |
 | 2026-10-11 | [طريقة التسليم وبدء البناء — 11/10/2026](rounds/2026-10-11-build-delivery.md) | 2 |
@@ -154,6 +155,10 @@
 | COMM-005 | المبلغ المؤهل للعمولة: المباشر والعروض والنقدي والذمم معًا | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
 | COMM-006 | أساس عمولة المشرف: فريقه، ومبيعاته الشخصية معلّقة حتى نسبة شهرية يدوية… | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
 | COMM-007 | الموظف غير المشمول بقاعدة الشهر إعداد ناقص | [2026-10-10-commissions](rounds/2026-10-10-commissions.md) |
+| COMM-009 | استثناءات موظف في القاعدة: حد أدنى للمبيعات (دونه العمولة الأساسية صفر فقط) ونسبة يدوية | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
+| COMM-010 | القاعدة التصاعدية: نسبة إضافية لكل خطوة فوق حد بسقف، على كل المبيعات المؤهلة | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
+| COMM-011 | مكافأة التنويع بحصص مجموعات الأصناف تضيف نسبة إلى نسبة الشريحة | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
+| COMM-012 | إلغاء كل قرارات الشهر المفتوح دفعة واحدة بسبب ومعاينة | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
 | COMM-008 | عمولة التحصيل لمندوبين تختارهم الإدارة: النقدي + المسدد من الذمم − المرتجعات | [2026-10-10-collection-commission](rounds/2026-10-10-collection-commission.md) |
 
 ### CUS — العملاء
@@ -244,6 +249,8 @@
 | GOAL-014 | تنوع الأصناف: الأصناف المختلفة المباعة ببيع موجب | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
 | GOAL-015 | التحصيل النسبي: تحصيل الشهر ÷ مبيعات الذمم في الشهر | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
 | GOAL-016 | مسار المقاييس العددية بمعادلة CARD-004، والنسبية دون مسار | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
+| GOAL-018 | ترتيب الشرائح للمقياس نفسه (A ≥ B ≥ C) والمخالفة تمنع الحفظ | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
+| GOAL-019 | قالب أهداف شهري يُعمَّم على الكل أو البعض، وجدول إدخال جماعي لكل الأهداف | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
 | GOAL-017 | هدف التحصيل: يُختار أساسه في كل هدف | [2026-10-11-metrics](rounds/2026-10-11-metrics.md) |
 
 ### INV — الفواتير
@@ -324,6 +331,7 @@
 | PRD-006 | تحديث الموجود وإضافة الجديد باستخدام كود الصنف، مع المعاينة والاعتماد. | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 | PRD-007 | عمود «عدد الحبات في الكرتونة» = عدد الباكيتات في الكرتونة؛ 1 = لا تحويل | [2026-10-10-products](rounds/2026-10-10-products.md) |
 | PRD-007 | المعاينة قبل الاعتماد | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
+| PRD-009 | مجموعات أصناف عامة تُعرَّف في صفحة المنتجات | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
 | PRD-008 | التصدير | [05-products-and-commission-rates](../10-spec/05-products-and-commission-rates.md) |
 
 ### PRICE — الأسعار
@@ -378,6 +386,8 @@
 | المعرّف | الوصف | الموضع |
 |---|---|---|
 | REWARD-001 | الأهداف تقيس الإنجاز، والمكافأة ترتبط بهدف أو AND/OR أو شريحة أو منتج/مجموعة/منطقة أو… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
+| REWARD-003 | مكافأة تجاوز هدف A الأصلي بصافي المبيعات بمستويات (مبلغ أو نسبة فوق الهدف) ومكافأة ثابتة لأعلى مستوى | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
+| REWARD-004 | سريان المكافأة لأكثر من شهر وتقييمها في كل شهر منفردًا | [2026-10-15-goals-commissions-additions](rounds/2026-10-15-goals-commissions-additions.md) |
 | REWARD-002 | تشمل خطط المكافآت مبلغًا ثابتًا أو نسبة أو إضافة أو مكافأة حسب الشريحة. طريقة الجمع… | [11-goals-commissions-permissions](../10-spec/11-goals-commissions-permissions.md) |
 
 ### SRC — مطابقة المصادر
