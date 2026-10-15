@@ -168,6 +168,22 @@ try {
     await dialog().getByRole('button', { name: 'إلغاء' }).click();
   });
 
+  await step('تعديل الموقع من نافذة العميل على الخريطة، ويسري على كل النظام (MAP-016)', async () => {
+    await page.goto(BASE + '#/locations');
+    await side().getByRole('row').filter({ hasText: '500' }).click();
+    await page.locator('.map-pop').getByRole('link', { name: 'تعديل الموقع' }).click();
+    await dialog().getByRole('heading', { name: 'موقع 500 — بقالة' }).waitFor();
+    await dialog().getByLabel('خط العرض').fill('31.55');
+    await dialog().getByLabel('خط الطول').fill('35.55');
+    await dialog().getByRole('button', { name: 'حفظ الموقع' }).click();
+    await dialog().waitFor({ state: 'detached' });
+    const c = (await db.query(`select lat::text, lng::text from customers where customer_number = '500'`)).rows[0];
+    assert.deepEqual([c.lat, c.lng], ['31.55', '35.55']);
+    // المصدر نفسه لملف العميل وتصدير المواقع والمناطق والتغطية
+    const loc = (await rpc('customer_locations', { p_opts: { search: '500' } }))[0];
+    assert.deepEqual([String(loc.lat), String(loc.lng), loc.region], ['31.55', '35.55', 'الغربية']);
+  });
+
   await step('المناطق: نقطة بالنقر على الخريطة، ثم حدود من GeoJSON، معاينة المتأثرين وحفظ', async () => {
     await page.goto(BASE + '#/regions');
     await side().getByText('الغربية').waitFor();

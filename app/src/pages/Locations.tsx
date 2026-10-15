@@ -38,12 +38,14 @@ export function Locations() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(o), ver]);
 
+  // تعديل الموقع من نافذة العميل على الخريطة (MAP-016): التعديل نفسه من القائمة، ويسري على كل النظام
+  const canEdit = can('P16', 'edit') || can('P02', 'edit');
   const points: MapPoint[] = useMemo(() => (rows ?? []).filter((r) => r.state === 'ok').map((r) => ({
     id: r.id, lat: Number(r.lat), lng: Number(r.lng), color: STATE_COLOR[r.region_state] ?? '#1f5fa8', title: `${r.customer_number} — ${r.name}`,
     popup: () => popupEl(`${r.customer_number} — ${r.name}`, [['النوع', r.kind], ['الرئيسي', r.master_name], ['المنطقة', r.region ?? REGION_STATE_LABEL[r.region_state]],
       ['الإحداثيات', `${r.lat}, ${r.lng}`], ['الأصل المستورد', r.orig_lat ? `${r.orig_lat}, ${r.orig_lng}` : null]],
-      [{ text: 'كشف الحساب', href: `#/statement?customer=${r.id}` }]),
-  })), [rows]);
+      [...(canEdit ? [{ text: 'تعديل الموقع', onClick: () => setEdit(r) }] : []), { text: 'كشف الحساب', href: `#/statement?customer=${r.id}` }]),
+  })), [rows, canEdit]);
   const counts = useMemo(() => ({ ok: (rows ?? []).filter((r) => r.state === 'ok').length, bad: (rows ?? []).filter((r) => r.state !== 'ok').length }), [rows]);
   const doExport = () => rows && writeSheet('مواقع العملاء.xlsx', 'المواقع', ['رقم العميل', 'اسم العميل', 'النوع', 'الرئيسي', 'خط العرض', 'خط الطول', 'الحالة', 'المنطقة'],
     rows.map((r) => [r.customer_number, r.name, r.kind, r.master_number, r.lat === null ? null : Number(r.lat), r.lng === null ? null : Number(r.lng),
@@ -80,7 +82,7 @@ export function Locations() {
                 <td><span className="num">{r.customer_number}</span> — {r.name}{r.kind === 'فرع' && <span className="small muted"> · فرع {r.master_number}</span>}
                   <div className="small muted">{r.region ?? REGION_STATE_LABEL[r.region_state]}</div></td>
                 <td>{r.state !== 'ok' && <Badge kind="warn">{LOC_LABEL[r.state]}</Badge>}</td>
-                <td>{(can('P16', 'edit') || can('P02', 'edit')) && <button className="btn link" onClick={(e) => { e.stopPropagation(); setEdit(r); }}>تعديل</button>}</td>
+                <td>{canEdit && <button className="btn link" onClick={(e) => { e.stopPropagation(); setEdit(r); }}>تعديل</button>}</td>
               </tr>
             ))}</tbody></table>
           )}

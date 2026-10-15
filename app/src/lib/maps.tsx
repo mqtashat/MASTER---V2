@@ -21,6 +21,15 @@ const CENTER: LatLng = [31.95, 35.91];
 export const PALETTE = ['#1f5fa8', '#2e7d32', '#b3261e', '#6d4c2f', '#7b1fa2', '#00838f', '#ef6c00', '#455a64', '#c2185b', '#827717'];
 export const colorOf = (i: number) => PALETTE[((i % PALETTE.length) + PALETTE.length) % PALETTE.length];
 
+// Leaflet قد يطلب إعادة رسم لوحة Canvas بعد إزالتها (إغلاق نافذة أو خريطة أثناء حركة)، فيفشل بـ clearRect؛
+// لا رسم دون لوحة قائمة
+const canvasProto = L.Canvas.prototype as unknown as { _redraw: () => void; _ctx?: CanvasRenderingContext2D; _redrawRequest: unknown };
+const origRedraw = canvasProto._redraw;
+canvasProto._redraw = function (this: typeof canvasProto) {
+  if (!this._ctx) { this._redrawRequest = null; return; }
+  origRedraw.call(this);
+};
+
 export function MapView({ points = [], polygons = [], cluster = true, selected, onSelect, editGeom, onEditGeom, height = 520, fitKey, children }: {
   points?: MapPoint[]; polygons?: MapPolygon[]; cluster?: boolean; selected?: string | number | null; onSelect?: (id: string | number) => void;
   editGeom?: Geom | null; onEditGeom?: (g: Geom) => void; height?: number | string; fitKey?: string; children?: ReactNode;
@@ -55,6 +64,8 @@ export function MapView({ points = [], polygons = [], cluster = true, selected, 
   useEffect(() => {
     const m = map.current;
     if (!m) return;
+    // إغلاق نافذة النقطة قبل استبدال النقاط، فلا تبقى نافذة لعلامة أزيلت
+    m.closePopup();
     layers.current.pts?.remove();
     layers.current.markers.clear();
     const group: L.LayerGroup = cluster ? L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40 }) : L.layerGroup();
@@ -106,7 +117,8 @@ export function MapView({ points = [], polygons = [], cluster = true, selected, 
     const grp = layers.current.pts as L.MarkerClusterGroup | undefined;
     const open = () => { m.setView(mk.getLatLng(), Math.max(m.getZoom(), 14)); mk.openPopup?.(); mk.setStyle({ radius: 11, weight: 3, color: '#000' }); };
     if (grp && 'zoomToShowLayer' in grp) grp.zoomToShowLayer(mk as unknown as L.Marker, open); else open();
-    return () => { mk.setStyle({ radius: 7, weight: 1.5, color: '#ffffff' }); };
+    // العلامة قد تكون أزيلت بإعادة تحميل النقاط (بعد تعديل موقع مثلًا)، فلا يُعاد رسمها على لوحة محذوفة
+    return () => { if (m.hasLayer(mk)) mk.setStyle({ radius: 7, weight: 1.5, color: '#ffffff' }); };
   }, [selected]);
 
   // تحرير الحدود: نقاط قابلة للسحب، والنقر المزدوج على نقطة يحذفها
