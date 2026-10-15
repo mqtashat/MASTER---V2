@@ -27,9 +27,16 @@ export function Commissions() {
   const [open, setOpen] = useState<number | null>(null);
   const [search, setSearch] = useState('');
   const [onlyBad, setOnlyBad] = useState(false);
+  const [role, setRole] = useState('');
+  const [tierF, setTierF] = useState('');
+  const [sort, setSort] = useState('name');
+  const [cancelAll, setCancelAll] = useState(false);
   const load = useAction();
   useEffect(() => { let live = true; setD(null); load.run(async () => { const r = await rpc<SumRes>('commission_summary', { p_month: month }); if (live) setD(r); }); return () => { live = false; }; /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [month, ver]);
-  const rows = (d?.rows ?? []).filter((r) => (!search || r.name.includes(search) || r.emp_number === search.trim()) && (!onlyBad || r.status !== 'complete'));
+  const rows = (d?.rows ?? []).filter((r) => (!search || r.name.includes(search) || r.emp_number === search.trim()) && (!onlyBad || r.status !== 'complete')
+    && (!role || r.role === role) && (!tierF || (r.tier ?? 'NONE') === tierF))
+    .sort((a, b) => (sort === 'final' ? Number(b.final ?? -Infinity) - Number(a.final ?? -Infinity) : sort === 'eligible' ? Number(b.eligible ?? 0) - Number(a.eligible ?? 0) : a.name.localeCompare(b.name, 'ar')));
+  const tierOptions = [...new Set((d?.rows ?? []).map((r) => r.tier ?? 'NONE'))].sort();
   const cols = d?.goal_columns ?? [];
   const total = (k: keyof SumRow) => rows.reduce((s, r) => s + Number(r[k] ?? 0), 0);
   const doExport = () => writeSheet(`العمولات ${fmtMonth(month).replace('/', '-')}.xlsx`, 'العمولات',
@@ -44,11 +51,17 @@ export function Commissions() {
     <>
       <div className="page-head">
         <h1>كشف العمولات</h1>
-        <div className="actions">{can('P14', 'export') && <button className="btn" disabled={!d} onClick={doExport}>تصدير Excel</button>}</div>
+        <div className="actions">
+          {can('P14', 'edit') && d && !d.closed && <button className="btn danger" onClick={() => setCancelAll(true)}>إلغاء كل قرارات الشهر</button>}
+          {can('P14', 'export') && <button className="btn" disabled={!d} onClick={doExport}>تصدير Excel</button>}
+        </div>
       </div>
       <div className="filters">
         <input className="input" type="month" value={monthInput(month)} onChange={(e) => setMonth(fromMonthInput(e.target.value))} aria-label="الشهر" />
         <input className="input" placeholder="بحث بالاسم أو الرقم" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="بحث" />
+        <select className="input" value={role} onChange={(e) => setRole(e.target.value)} aria-label="الدور"><option value="">كل الأدوار</option><option value="rep">المندوبون</option><option value="supervisor">المشرفون</option></select>
+        <select className="input" value={tierF} onChange={(e) => setTierF(e.target.value)} aria-label="الشريحة"><option value="">كل الشرائح</option>{tierOptions.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+        <select className="input" value={sort} onChange={(e) => setSort(e.target.value)} aria-label="الترتيب"><option value="name">بالاسم</option><option value="final">بالمستحق النهائي</option><option value="eligible">بالمبيعات المؤهلة</option></select>
         <label className="check"><input type="checkbox" checked={onlyBad} onChange={(e) => setOnlyBad(e.target.checked)} /> غير المكتملة فقط</label>
         {d && <span className="count">{rows.length} موظف{d.closed && ` · شهر مغلق (النسخة ${d.version})`}</span>}
       </div>
@@ -79,6 +92,7 @@ export function Commissions() {
               {r.warnings.filter((w) => !w.blocking).length > 0 && <> <Badge kind="warn">{r.warnings.filter((w) => !w.blocking).length} تنبيه</Badge></>}</td>
           </tr>
         ))}</tbody></table></div>
+      {cancelAll && <CancelAll month={month} onClose={() => setCancelAll(false)} onDone={() => { setCancelAll(false); setVer(ver + 1); }} />}
       {open && <Statement employeeId={open} month={month} onClose={() => setOpen(null)} onChanged={() => setVer(ver + 1)} />}
     </>
   );
@@ -99,6 +113,7 @@ interface Stmt {
   paid: { doc_id: number; number: string; date: string; tier: string | null; customer: string; paid: N; commission: N }[];
   deferred: { doc_id: number; number: string; date: string; total: N; remaining: N; customer: string }[];
   goals: { achieved: string; components: { id: number; tier: string | null; label: string; final: N; actual: N; pct: N; kind: Kind; status: string; met: boolean }[]; days: { total: number; elapsed: number } } | null;
+  rule_tiers?: string[]; extras?: { prog: N; div: N; div_level: number | null; shares: Record<string, N>; manual_rate: N; min_sales: N; below_min: boolean };
   snapshot: boolean; version?: number; snapshot_at?: string; closed: boolean; versions: number[] | null; employee: { id: number; name: string; emp_number: string };
 }
 const KIND_LABEL: Record<string, string> = { manual_tier: 'شريحة يدوية', add: 'إضافة', deduct: 'خصم', zero_base: 'تصفير العمولة الأساسية', zero_all: 'تصفير كامل المستحق' };
@@ -162,6 +177,14 @@ function Statement({ employeeId, month, onClose, onChanged }: { employeeId: numb
             <tr className="total"><td><b>المستحق النهائي</b></td><td className="num"><b>{s.final === null ? 'غير مكتمل' : fmtAmount(s.final)}</b></td><td></td></tr>
           </tbody></table>
 
+          {s.extras && (Number(s.extras.prog) > 0 || Number(s.extras.div) > 0 || s.extras.manual_rate !== null || s.extras.below_min || s.extras.min_sales !== null) && (
+            <p className="small">
+              {s.extras.manual_rate !== null && <>نسبة يدوية للموظف: <b className="num">{fmtPct(s.extras.manual_rate)}</b> · </>}
+              {Number(s.extras.prog) > 0 && <>إضافة تصاعدية: <b className="num">+{fmtPct(s.extras.prog)}</b> · </>}
+              {Number(s.extras.div) > 0 && <>إضافة التنويع (المستوى {s.extras.div_level}): <b className="num">+{fmtPct(s.extras.div)}</b> · </>}
+              {s.extras.min_sales !== null && <>الحد الأدنى للمبيعات: <b className="num">{fmtAmount(s.extras.min_sales)}</b>{s.extras.below_min && ' — لم يُبلغ، فالأساسية صفر'}</>}
+            </p>
+          )}
           {s.goals && (
             <>
               <h3 style={{ marginTop: 10 }}>الأهداف — المحققة <b className={tierClass(s.goals.achieved)}>{s.goals.achieved}</b></h3>
@@ -254,7 +277,13 @@ function AdjustmentForm({ s, onClose, onDone }: { s: Stmt; onClose: () => void; 
       <button className="btn" onClick={onClose}>إلغاء</button></>}>
       <Field label="القرار"><select value={f.kind} onChange={(e) => set({ kind: e.target.value })}>
         {Object.entries(KIND_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></Field>
-      {f.kind === 'manual_tier' && <Field label="الشريحة" hint="تحل محل المحسوبة وتبقى المحسوبة ظاهرة"><input value={f.tier} onChange={(e) => set({ tier: e.target.value.toUpperCase() })} /></Field>}
+      {f.kind === 'manual_tier' && (
+        <Field label="الشريحة" hint="من شرائح قاعدة الشهر؛ تحل محل المحسوبة وتبقى المحسوبة ظاهرة">
+          {s.rule_tiers && s.rule_tiers.length > 0
+            ? <select value={f.tier} onChange={(e) => set({ tier: e.target.value })}><option value="">اختر</option>{s.rule_tiers.map((t) => <option key={t} value={t}>{t}</option>)}</select>
+            : <input value={f.tier} onChange={(e) => set({ tier: e.target.value.toUpperCase() })} />}
+        </Field>
+      )}
       {money && <>
         <Field label="بـ"><select value={f.by} onChange={(e) => set({ by: e.target.value })}><option value="amount">مبلغ</option><option value="pct">نسبة</option></select></Field>
         {f.by === 'amount' ? <Field label="المبلغ"><input inputMode="decimal" value={f.amount} onChange={(e) => set({ amount: e.target.value })} /></Field> : <>
@@ -284,6 +313,30 @@ function CancelAdj({ a, onClose, onDone }: { a: Adj; onClose: () => void; onDone
   return (
     <Modal title={`إلغاء قرار «${KIND_LABEL[a.kind]}»`} onClose={onClose} footer={<><button className="btn danger" disabled={busy || !reason.trim()} onClick={go}>إلغاء القرار</button><button className="btn" onClick={onClose}>رجوع</button></>}>
       <Field label="السبب"><input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      {error && <Msg kind="bad">{error}</Msg>}
+    </Modal>
+  );
+}
+
+// إلغاء كل قرارات صرف الشهر المفتوح دفعة واحدة (COMM-012): معاينة العدد ثم سبب وتنفيذ
+function CancelAll({ month, onClose, onDone }: { month: string; onClose: () => void; onDone: () => void }) {
+  const [pv, setPv] = useState<{ count: number; skipped_self: number; employees: { employee_id: number; name: string; count: number }[] } | null>(null);
+  const [reason, setReason] = useState('');
+  const { busy, error, run } = useAction();
+  useEffect(() => { run(async () => setPv(await rpc('cancel_month_adjustments', { p_month: month, p_reason: null, p_commit: false }))); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  const go = () => run(async () => { await rpc('cancel_month_adjustments', { p_month: month, p_reason: reason, p_commit: true }); onDone(); });
+  return (
+    <Modal title={`إلغاء كل قرارات ${fmtMonth(month)}`} onClose={onClose} footer={<>
+      <button className="btn danger" disabled={busy || !pv || pv.count === 0 || !reason.trim()} onClick={go}>إلغاء الكل ({pv?.count ?? 0})</button>
+      <button className="btn" onClick={onClose}>رجوع</button></>}>
+      {!pv ? <div className="skeleton" /> : pv.count === 0 ? <Msg kind="ok">لا قرارات صرف فعالة في هذا الشهر ضمن نطاقك.</Msg> : (
+        <>
+          <p>تُلغى {pv.count} قرارًا فعالًا لـ {pv.employees.length} موظفًا، ويعود المستحق إلى الحساب دونها. يبقى كل قرار في سجل العمليات.</p>
+          <table className="inner"><tbody>{pv.employees.map((e) => <tr key={e.employee_id}><td>{e.name}</td><td className="num">{e.count}</td></tr>)}</tbody></table>
+          {pv.skipped_self > 0 && <Msg>{pv.skipped_self} قرارًا يخص حسابك تُرك؛ لا تعدّل بياناتك.</Msg>}
+          <Field label="السبب (إلزامي)"><input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+        </>
+      )}
       {error && <Msg kind="bad">{error}</Msg>}
     </Modal>
   );

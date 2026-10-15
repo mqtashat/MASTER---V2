@@ -12,8 +12,13 @@ import { CustomerPicker, PickedCustomer } from '../components/CustomerPicker';
 import { AuditList } from './Settings';
 
 interface RuleTier { tier: string; sort: number; rep_rate: string | number | null; sup_rate: string | number | null }
-interface Member { employee_id: number; name: string; emp_number: string }
-interface Rule { id: number; month: string; name: string; note: string | null; tiers: RuleTier[]; members: Member[]; hidden_members?: number }
+interface Member { employee_id: number; name: string; emp_number: string; min_sales?: string | number | null; manual_rate?: string | number | null }
+interface DivLevel { add_rate: string | number; shares: Record<string, string | number> }
+interface PGroup { id: number; name: string; products: { id: number; code: string; name: string }[]; used: boolean }
+interface Rule {
+  id: number; month: string; name: string; note: string | null; tiers: RuleTier[]; members: Member[]; hidden_members?: number;
+  prog_threshold: string | number | null; prog_step: string | number | null; prog_add: string | number | null; prog_cap: string | number | null; diversification: DivLevel[];
+}
 interface MonthRes {
   month: string; closed: boolean; rules: Rule[]; uncovered: Member[];
   collection_reps: { id: number; employee_id: number; name: string; emp_number: string; from_month: string; to_month: string | null }[];
@@ -35,6 +40,8 @@ export function CommissionRules() {
   const [log, setLog] = useState<Rule | null>(null);
   const [del, setDel] = useState<Rule | null>(null);
   const [copy, setCopy] = useState(false);
+  const [groups, setGroups] = useState<PGroup[]>([]);
+  useEffect(() => { rpc<PGroup[]>('product_groups_list').then(setGroups).catch(() => setGroups([])); }, [ver]);
   const load = useAction();
   useEffect(() => { let live = true; load.run(async () => { const r = await rpc<MonthRes>('commission_month', { p_month: month }); if (live) setD(r); }); return () => { live = false; }; /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [month, ver]);
   const refresh = () => setVer(ver + 1);
@@ -82,7 +89,13 @@ export function CommissionRules() {
                     <td className="num">{t.sup_rate === null ? <span className="muted">من الأصناف</span> : fmtPct(t.sup_rate)}</td></tr>
                 ))}</tbody>
               </table>
-              <p className="small" style={{ marginBottom: 0 }}>المشمولون ({r.members.length + (r.hidden_members ?? 0)}): {r.members.map((m) => m.name).join('، ') || '—'}{r.hidden_members ? ` و${r.hidden_members} خارج نطاقك` : ''}</p>
+              {r.prog_step !== null && (
+                <p className="small">قاعدة تصاعدية: +{fmtPct(r.prog_add)} لكل {fmtAmount(r.prog_step)} مبيعات فوق {fmtAmount(r.prog_threshold ?? 0)}، بسقف +{fmtPct(r.prog_cap)} (على كل المبيعات المؤهلة، بوحدة الموظف: % للمندوب و‰ للمشرف)</p>
+              )}
+              {r.diversification.length > 0 && (
+                <p className="small">مكافأة التنويع: {r.diversification.map((l, i) => `المستوى ${i + 1}: +${fmtPct(l.add_rate)} عند ${Object.entries(l.shares).map(([g, v]) => `${groups.find((x) => String(x.id) === g)?.name ?? g} ≥ ${fmtPct(v)}%`).join(' و')}`).join('؛ ')}</p>
+              )}
+              <p className="small" style={{ marginBottom: 0 }}>المشمولون ({r.members.length + (r.hidden_members ?? 0)}): {r.members.map((m) => m.name + (m.min_sales !== null && m.min_sales !== undefined ? ` (حد أدنى ${fmtAmount(m.min_sales)})` : '') + (m.manual_rate !== null && m.manual_rate !== undefined ? ` (نسبة يدوية ${fmtPct(m.manual_rate)})` : '')).join('، ') || '—'}{r.hidden_members ? ` و${r.hidden_members} خارج نطاقك` : ''}</p>
             </div>
           ))}
           <p className="small muted">نسبة الشريحة الفارغة تعني استخدام نسبة الصنف بحسب تاريخ السند؛ ونسبة الصنف الفارغة تجعل العمولة غير مكتملة.</p>
@@ -90,7 +103,7 @@ export function CommissionRules() {
       )}
       {d && tab === 'collection' && <CollectionTab d={d} month={month} admin={admin} onDone={refresh} />}
       {d && tab === 'personal' && <PersonalTab d={d} month={month} admin={admin} onDone={refresh} />}
-      {edit && <RuleEditor month={month} rule={edit === 'new' ? null : edit} defaults={d?.default_tiers ?? ['A', 'B', 'C', 'X']} onClose={() => setEdit(null)} onDone={() => { setEdit(null); refresh(); }} />}
+      {edit && <RuleEditor month={month} rule={edit === 'new' ? null : edit} groups={groups} defaults={d?.default_tiers ?? ['A', 'B', 'C', 'X']} onClose={() => setEdit(null)} onDone={() => { setEdit(null); refresh(); }} />}
       {log && <Drawer title={`سجل القاعدة «${log.name}»`} onClose={() => setLog(null)}><AuditList entity="commission_rules" entityId={String(log.id)} /></Drawer>}
       {del && <DeleteRule rule={del} onClose={() => setDel(null)} onDone={() => { setDel(null); refresh(); }} />}
       {copy && <CopyRules month={month} onClose={() => setCopy(false)} onDone={() => { setCopy(false); refresh(); }} />}
@@ -117,18 +130,26 @@ function ReviewReminder({ month, onDone }: { month: string; onDone: () => void }
 
 interface PreviewRow { employee_id: number; name: string; before: { base: string | null; tier: string | null; status: string }; after: { base: string | null; tier: string | null; status: string; warnings: { code: string; message: string }[] } }
 
-function RuleEditor({ month, rule, defaults, onClose, onDone }: { month: string; rule: Rule | null; defaults: string[]; onClose: () => void; onDone: () => void }) {
+function RuleEditor({ month, rule, groups, defaults, onClose, onDone }: { month: string; rule: Rule | null; groups: PGroup[]; defaults: string[]; onClose: () => void; onDone: () => void }) {
   const emps = useEmployees();
   const [name, setName] = useState(rule?.name ?? '');
   const [note, setNote] = useState(rule?.note ?? '');
   const [tiers, setTiers] = useState<RuleTier[]>(rule?.tiers ?? defaults.map((t, i) => ({ tier: t, sort: i + 1, rep_rate: '', sup_rate: '' })));
   const [members, setMembers] = useState<number[]>(rule?.members.map((m) => Number(m.employee_id)) ?? []);
+  const [ov, setOv] = useState<Record<number, { min_sales: string; manual_rate: string }>>(() => Object.fromEntries((rule?.members ?? []).map((m) => [Number(m.employee_id),
+    { min_sales: m.min_sales === null || m.min_sales === undefined ? '' : String(m.min_sales), manual_rate: m.manual_rate === null || m.manual_rate === undefined ? '' : String(m.manual_rate) }])));
+  const [prog, setProg] = useState({ threshold: String(rule?.prog_threshold ?? ''), step: String(rule?.prog_step ?? ''), add: String(rule?.prog_add ?? ''), cap: String(rule?.prog_cap ?? '') });
+  const [div, setDiv] = useState<DivLevel[]>(rule?.diversification ?? []);
   const [search, setSearch] = useState('');
   const [pv, setPv] = useState<PreviewRow[] | null>(null);
   const [reason, setReason] = useState('');
   const { busy, error, run } = useAction();
   const guarded = useGuarded();
-  const payload = () => ({ month, name, note, tiers: tiers.map((t, i) => ({ ...t, sort: i + 1, rep_rate: t.rep_rate ?? '', sup_rate: t.sup_rate ?? '' })), members });
+  const nullIfBlank = (v: string) => (v.trim() === '' ? '' : v.trim());
+  const payload = () => ({ month, name, note, tiers: tiers.map((t, i) => ({ ...t, sort: i + 1, rep_rate: t.rep_rate ?? '', sup_rate: t.sup_rate ?? '' })),
+    members: members.map((id) => ({ employee_id: id, min_sales: nullIfBlank(ov[id]?.min_sales ?? ''), manual_rate: nullIfBlank(ov[id]?.manual_rate ?? '') })),
+    prog_threshold: nullIfBlank(prog.threshold), prog_step: nullIfBlank(prog.step), prog_add: nullIfBlank(prog.add), prog_cap: nullIfBlank(prog.cap),
+    diversification: div.map((l) => ({ add_rate: Number(l.add_rate), shares: Object.fromEntries(Object.entries(l.shares).filter(([, v]) => String(v).trim() !== '').map(([g, v]) => [g, Number(v)])) })) });
   const change = (fn: () => void) => { fn(); setPv(null); };
   const preview = () => run(async () => setPv(await rpc<PreviewRow[]>('preview_commission_rule', { p_id: rule?.id ?? null, p: payload() })));
   const save = () => run(async () => { await guarded((code) => rpc('save_commission_rule', { p_id: rule?.id ?? null, p: payload(), p_reason: rule ? reason : null, p_code: code })); onDone(); });
@@ -160,6 +181,45 @@ function RuleEditor({ month, rule, defaults, onClose, onDone }: { month: string;
         <label key={e.id} className="check"><input type="checkbox" checked={members.includes(Number(e.id))}
           onChange={(ev) => change(() => setMembers(ev.target.checked ? [...members, Number(e.id)] : members.filter((x) => x !== Number(e.id))))} /> {e.emp_number} — {e.name}</label>
       ))}</div>
+      {members.length > 0 && (
+        <details>
+          <summary>استثناءات المشمولين (حد أدنى للمبيعات أو نسبة يدوية)</summary>
+          <p className="small muted">دون الحد الأدنى للمبيعات المؤهلة تكون العمولة الأساسية صفرًا فقط وتبقى المكافآت والقرارات. النسبة اليدوية (% للمندوب، ‰ للمشرف) تحل محل نسبة الشريحة لسطور الشهر.</p>
+          <table className="inner"><thead><tr><th>الموظف</th><th>الحد الأدنى للمبيعات</th><th>نسبة يدوية</th></tr></thead>
+            <tbody>{members.map((id) => { const e = emps.find((x) => Number(x.id) === id); return (
+              <tr key={id}><td>{e ? `${e.emp_number} — ${e.name}` : id}</td>
+                <td><input className="input" inputMode="decimal" aria-label={`حد أدنى ${e?.name ?? id}`} value={ov[id]?.min_sales ?? ''} onChange={(ev) => change(() => setOv({ ...ov, [id]: { min_sales: ev.target.value, manual_rate: ov[id]?.manual_rate ?? '' } }))} /></td>
+                <td><input className="input" inputMode="decimal" aria-label={`نسبة يدوية ${e?.name ?? id}`} value={ov[id]?.manual_rate ?? ''} onChange={(ev) => change(() => setOv({ ...ov, [id]: { min_sales: ov[id]?.min_sales ?? '', manual_rate: ev.target.value } }))} /></td></tr>); })}</tbody></table>
+        </details>
+      )}
+      <details open={!!prog.step}>
+        <summary>القاعدة التصاعدية (اختياري)</summary>
+        <p className="small muted">نسبة إضافية لكل خطوة مبيعات فوق حد، بسقف، تُطبَّق على كل المبيعات المؤهلة وتُضاف إلى نسبة الشريحة بوحدة الموظف (% للمندوب، ‰ للمشرف). الخطوة والإضافة والسقف معًا.</p>
+        <div className="grid2">
+          <Field label="الحد (مبيعات)"><input inputMode="decimal" value={prog.threshold} aria-label="حد التصاعد" onChange={(e) => change(() => setProg({ ...prog, threshold: e.target.value }))} /></Field>
+          <Field label="الخطوة (مبيعات)"><input inputMode="decimal" value={prog.step} aria-label="خطوة التصاعد" onChange={(e) => change(() => setProg({ ...prog, step: e.target.value }))} /></Field>
+          <Field label="الإضافة لكل خطوة"><input inputMode="decimal" value={prog.add} aria-label="إضافة التصاعد" onChange={(e) => change(() => setProg({ ...prog, add: e.target.value }))} /></Field>
+          <Field label="السقف الإجمالي للإضافة"><input inputMode="decimal" value={prog.cap} aria-label="سقف التصاعد" onChange={(e) => change(() => setProg({ ...prog, cap: e.target.value }))} /></Field>
+        </div>
+      </details>
+      <details open={div.length > 0}>
+        <summary>مكافأة التنويع بحصص مجموعات الأصناف (اختياري)</summary>
+        <p className="small muted">كل مستوى يشترط حصة دنيا لكل مجموعة من المبيعات المؤهلة، ويضيف نسبة إلى نسبة الشريحة. يُطبَّق أول مستوى محقق بالترتيب، فرتّب الأعلى أولًا. المجموعات تُعرَّف في صفحة المنتجات.</p>
+        {groups.length === 0 && <Msg>لا مجموعات أصناف بعد؛ عرّفها في صفحة «المنتجات والأسعار» ثم عُد.</Msg>}
+        {div.map((l, i) => (
+          <div key={i} className="panel">
+            <div className="actions"><b>المستوى {i + 1}</b>
+              <button className="btn link" onClick={() => change(() => setDiv(div.filter((_, j) => j !== i)))}>حذف المستوى</button></div>
+            <Field label="النسبة المضافة"><input inputMode="decimal" aria-label={`نسبة مستوى التنويع ${i + 1}`} value={l.add_rate} onChange={(e) => change(() => setDiv(div.map((x, j) => (j === i ? { ...x, add_rate: e.target.value } : x))))} /></Field>
+            <div className="member-grid">{groups.map((g) => (
+              <label key={g.id} className="check"><span>{g.name}</span>
+                <input className="input" style={{ width: 80 }} inputMode="decimal" placeholder="حصة دنيا %" aria-label={`حصة ${g.name} مستوى ${i + 1}`} value={l.shares[String(g.id)] ?? ''}
+                  onChange={(e) => change(() => setDiv(div.map((x, j) => (j === i ? { ...x, shares: { ...x.shares, [String(g.id)]: e.target.value } } : x))))} /></label>
+            ))}</div>
+          </div>
+        ))}
+        <button className="btn" disabled={groups.length === 0} onClick={() => change(() => setDiv([...div, { add_rate: '', shares: {} }]))}>إضافة مستوى</button>
+      </details>
       {pv && (
         <div className="panel">
           <h3>الأثر على العمولة الأساسية</h3>

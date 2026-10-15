@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { rpc } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { fmtAmount, fmtMonth, fmtPct } from '../lib/format';
-import { Filters, fmtMetric, fromMonthInput, METRICS, metricDef, monthInput, thisMonth, useEmployees } from '../lib/goals';
+import { Filters, fmtMetric, fromMonthInput, metricDef, monthInput, thisMonth, useEmployees, useProducts } from '../lib/goals';
+import { CompEditor } from './Goals';
 import { Badge, Drawer, Field, Modal, Msg, useAction, useGuarded } from '../components/ui';
 import { AuditList } from './Settings';
 
+interface OverLevel { kind: 'amount' | 'percent'; over: string | number; reward: string | number }
 interface Reward {
-  id: number; month: string; name: string; role: 'all' | 'rep' | 'supervisor'; employees: number[] | null; employee_names: string[] | null; hidden_employees?: number;
-  cond_type: 'tier' | 'metric'; tiers: string[] | null; metric: string | null; metric_min: string | number | null; filters: Filters;
+  id: number; month: string; to_month: string | null; over_levels: OverLevel[] | null; name: string; role: 'all' | 'rep' | 'supervisor'; employees: number[] | null; employee_names: string[] | null; hidden_employees?: number;
+  cond_type: 'tier' | 'metric' | 'over_target'; tiers: string[] | null; metric: string | null; metric_min: string | number | null; filters: Filters;
   value_type: 'fixed' | 'percent'; amount: string | number | null; pct: string | number | null; pct_base: 'eligible' | 'base_commission' | null;
   group_name: string | null; stack_mode: 'STACK' | 'HIGHEST_ONLY'; note: string | null;
   qualified: { employee_id: number; name: string; amount: string; reason: string; counted: boolean }[];
@@ -21,10 +23,15 @@ const BASE_TEXT = { eligible: 'المبيعات المؤهلة', base_commission
 
 export function condText(r: Pick<Reward, 'cond_type' | 'tiers' | 'metric' | 'metric_min'>): string {
   if (r.cond_type === 'tier') return 'الشريحة المحققة: ' + (r.tiers ?? []).join(' أو ');
+  if (r.cond_type === 'over_target') return 'تجاوز هدف A الأصلي لصافي المبيعات';
   const def = metricDef(r.metric ?? '');
   return `${def.label} ≥ ${fmtMetric(r.metric_min, def.kind)}`;
 }
-export function valueText(r: Pick<Reward, 'value_type' | 'amount' | 'pct' | 'pct_base'>): string {
+export function levelsText(levels: OverLevel[] | null): string {
+  return (levels ?? []).map((l) => `${l.kind === 'amount' ? fmtAmount(l.over) : fmtPct(l.over) + '%'} فأكثر ← ${fmtAmount(l.reward)}`).join('؛ ') + ' (أعلى مستوى محقق فقط)';
+}
+export function valueText(r: Pick<Reward, 'value_type' | 'amount' | 'pct' | 'pct_base' | 'cond_type' | 'over_levels'>): string {
+  if (r.cond_type === 'over_target') return levelsText(r.over_levels);
   return r.value_type === 'fixed' ? fmtAmount(r.amount) : `${fmtPct(r.pct)}% من ${BASE_TEXT[r.pct_base ?? 'eligible']}`;
 }
 
@@ -61,6 +68,7 @@ export function Rewards() {
             </div>
           </div>
           <dl className="kv">
+            <dt>السريان</dt><dd>{fmtMonth(r.month)}{r.to_month && ` إلى ${fmtMonth(r.to_month)}`} <span className="small muted">— يُقيَّم كل شهر منفردًا</span></dd>
             <dt>الشرط</dt><dd>{condText(r)}</dd>
             <dt>القيمة</dt><dd>{valueText(r)}</dd>
             <dt>المشمولون</dt><dd>{r.employee_names?.length || r.hidden_employees ? [...(r.employee_names ?? []), ...(r.hidden_employees ? [`${r.hidden_employees} خارج نطاقك`] : [])].join('، ') : ROLE_TEXT[r.role]}</dd>
@@ -86,6 +94,10 @@ export function Rewards() {
 
 function RewardEditor({ month, reward, onClose, onDone }: { month: string; reward: Reward | null; onClose: () => void; onDone: () => void }) {
   const emps = useEmployees();
+  const products = useProducts();
+  const [filters, setFilters] = useState<Filters>(reward?.filters ?? {});
+  const [toMonth, setToMonth] = useState(reward?.to_month ? reward.to_month.slice(0, 7) : '');
+  const [levels, setLevels] = useState<OverLevel[]>(reward?.over_levels ?? [{ kind: 'amount', over: '', reward: '' }]);
   const [f, setF] = useState({
     name: reward?.name ?? '', role: reward?.role ?? 'all', cond_type: reward?.cond_type ?? 'tier', tiers: (reward?.tiers ?? ['A']).join(' '),
     metric: reward?.metric ?? 'net_sales', metric_min: reward?.metric_min === null || reward?.metric_min === undefined ? '' : String(reward.metric_min),
@@ -98,8 +110,10 @@ function RewardEditor({ month, reward, onClose, onDone }: { month: string; rewar
   const guarded = useGuarded();
   const set = (n: Partial<typeof f>) => setF({ ...f, ...n });
   const save = () => run(async () => {
-    const p = { ...f, month, tiers: f.tiers.split(/[\s,،]+/).filter(Boolean), employees: employees.length ? employees : null,
-      filters: reward?.filters ?? {}, pct_base: f.pct_base || null, stack_mode: f.stack_mode || null };
+    const over = f.cond_type === 'over_target';
+    const p = { ...f, month, to_month: toMonth ? toMonth + '-01' : null, tiers: f.tiers.split(/[\s,،]+/).filter(Boolean), employees: employees.length ? employees : null,
+      filters, pct_base: f.pct_base || null, stack_mode: f.stack_mode || null,
+      role: over ? 'rep' : f.role, value_type: over ? 'fixed' : f.value_type, over_levels: over ? levels.map((l) => ({ kind: l.kind, over: Number(l.over), reward: Number(l.reward) })) : null };
     await guarded((code) => rpc('save_reward', { p_id: reward?.id ?? null, p, p_code: code }));
     onDone();
   });
@@ -108,19 +122,17 @@ function RewardEditor({ month, reward, onClose, onDone }: { month: string; rewar
       footer={<><button className="btn primary" disabled={busy || !f.name.trim()} onClick={save}>حفظ</button><button className="btn" onClick={onClose}>إلغاء</button></>}>
       <div className="grid3">
         <Field label="الاسم"><input value={f.name} onChange={(e) => set({ name: e.target.value })} /></Field>
-        <Field label="الدور"><select value={f.role} onChange={(e) => set({ role: e.target.value as Reward['role'] })}>
+        <Field label="الدور"><select value={f.cond_type === 'over_target' ? 'rep' : f.role} disabled={f.cond_type === 'over_target'} onChange={(e) => set({ role: e.target.value as Reward['role'] })}>
           <option value="all">المندوبون والمشرفون</option><option value="rep">المندوبون</option><option value="supervisor">المشرفون</option></select></Field>
-        <Field label="نوع الشرط"><select value={f.cond_type} onChange={(e) => set({ cond_type: e.target.value as Reward['cond_type'] })}>
-          <option value="tier">شريحة محققة</option><option value="metric">حد أدنى لمقياس</option></select></Field>
-        {f.cond_type === 'tier' ? (
-          <Field label="الشرائح المؤهلة" hint="مثل: A B"><input value={f.tiers} onChange={(e) => set({ tiers: e.target.value.toUpperCase() })} /></Field>
-        ) : <>
-          <Field label="المقياس" hint={metricDef(f.metric).hint}><select value={f.metric} onChange={(e) => set({ metric: e.target.value })}>{METRICS.map((m) => <option key={m.code} value={m.code}>{m.label}</option>)}</select></Field>
-          <Field label="الحد الأدنى"><input inputMode="decimal" value={f.metric_min} onChange={(e) => set({ metric_min: e.target.value })} /></Field>
-        </>}
-        <Field label="نوع القيمة"><select value={f.value_type} onChange={(e) => set({ value_type: e.target.value as Reward['value_type'] })}>
-          <option value="fixed">مبلغ ثابت</option><option value="percent">نسبة</option></select></Field>
-        {f.value_type === 'fixed' ? <Field label="المبلغ"><input inputMode="decimal" value={f.amount} onChange={(e) => set({ amount: e.target.value })} /></Field> : <>
+        <Field label="نوع الشرط"><select value={f.cond_type} onChange={(e) => set({ cond_type: e.target.value as Reward['cond_type'], ...(e.target.value === 'over_target' ? { role: 'rep' as Reward['role'] } : {}) })}>
+          <option value="tier">شريحة محققة</option><option value="metric">حد أدنى لمقياس</option><option value="over_target">تجاوز هدف A الأصلي</option></select></Field>
+        <Field label="يسري حتى شهر (اختياري)" hint="فارغ = هذا الشهر فقط؛ يُقيَّم كل شهر منفردًا على بياناته">
+          <input type="month" min={month.slice(0, 7)} value={toMonth} onChange={(e) => setToMonth(e.target.value)} aria-label="يسري حتى شهر" /></Field>
+        {f.cond_type === 'tier' && <Field label="الشرائح المؤهلة" hint="مثل: A B"><input value={f.tiers} onChange={(e) => set({ tiers: e.target.value.toUpperCase() })} /></Field>}
+        {f.cond_type === 'metric' && <Field label="الحد الأدنى"><input inputMode="decimal" value={f.metric_min} onChange={(e) => set({ metric_min: e.target.value })} /></Field>}
+        {f.cond_type !== 'over_target' && <Field label="نوع القيمة"><select value={f.value_type} onChange={(e) => set({ value_type: e.target.value as Reward['value_type'] })}>
+          <option value="fixed">مبلغ ثابت</option><option value="percent">نسبة</option></select></Field>}
+        {f.cond_type === 'over_target' ? null : f.value_type === 'fixed' ? <Field label="المبلغ"><input inputMode="decimal" value={f.amount} onChange={(e) => set({ amount: e.target.value })} /></Field> : <>
           <Field label="النسبة %"><input inputMode="decimal" value={f.pct} onChange={(e) => set({ pct: e.target.value })} /></Field>
           <Field label="أساس النسبة" hint="مطلوب صراحة (B025)"><select value={f.pct_base} onChange={(e) => set({ pct_base: e.target.value })}>
             <option value="">اختر</option><option value="eligible">المبيعات المؤهلة</option><option value="base_commission">العمولة الأساسية</option></select></Field>
@@ -130,6 +142,27 @@ function RewardEditor({ month, reward, onClose, onDone }: { month: string; rewar
           <option value="">اختر</option><option value="STACK">جمع المستحقات</option><option value="HIGHEST_ONLY">الأعلى فقط</option></select></Field>
         <Field label="ملاحظة"><input value={f.note} onChange={(e) => set({ note: e.target.value })} /></Field>
       </div>
+      {f.cond_type === 'metric' && (
+        <div className="panel"><h3>المقياس ونطاقه</h3>
+          <CompEditor hideTarget hideAffected products={products} c={{ tier: null, sort: 1, metric: f.metric, target: null, affected: true, filters, label: null }}
+            onChange={(n) => { set({ metric: n.metric }); setFilters(n.filters ?? {}); }} />
+        </div>
+      )}
+      {f.cond_type === 'over_target' && (
+        <div className="panel"><h3>مستويات التجاوز (صافي المبيعات فوق هدف A الأصلي)</h3>
+          <p className="small muted">يُصرف أعلى مستوى محقق فقط. المبلغ بالدينار فوق الهدف، أو نسبة من الهدف الأصلي. المكافأة مبلغ ثابت.</p>
+          {levels.map((l, i) => (
+            <div key={i} className="comp-row">
+              <Field label="التجاوز"><select value={l.kind} onChange={(e) => setLevels(levels.map((x, j) => (j === i ? { ...x, kind: e.target.value as OverLevel['kind'] } : x)))}>
+                <option value="amount">بمبلغ</option><option value="percent">بنسبة % من الهدف الأصلي</option></select></Field>
+              <Field label={l.kind === 'amount' ? 'المبلغ فوق الهدف' : 'النسبة %'}><input inputMode="decimal" aria-label="قيمة التجاوز" value={l.over} onChange={(e) => setLevels(levels.map((x, j) => (j === i ? { ...x, over: e.target.value } : x)))} /></Field>
+              <Field label="مبلغ المكافأة"><input inputMode="decimal" aria-label="مبلغ مكافأة المستوى" value={l.reward} onChange={(e) => setLevels(levels.map((x, j) => (j === i ? { ...x, reward: e.target.value } : x)))} /></Field>
+              <button className="btn link" disabled={levels.length === 1} onClick={() => setLevels(levels.filter((_, j) => j !== i))}>حذف المستوى</button>
+            </div>
+          ))}
+          <button className="btn" onClick={() => setLevels([...levels, { kind: 'amount', over: '', reward: '' }])}>إضافة مستوى</button>
+        </div>
+      )}
       <details>
         <summary>موظفون محددون ({employees.length || 'الكل ضمن الدور'})</summary>
         <div className="member-grid">{emps.filter((e) => e.status === 'نشط' || employees.includes(Number(e.id))).map((e) => (

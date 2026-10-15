@@ -111,9 +111,10 @@ export function filtersText(f: Filters, products: Product[], regions: { id: numb
 export const WARN_LABEL: Record<string, string> = {
   no_rule: 'إعداد ناقص: لا قاعدة للشهر', missing_rate: 'إعداد ناقص: نسبة صنف فارغة', personal_pending: 'الشخصية معلّقة',
   no_plan: 'لا خطة أهداف', zero_target: 'هدف صفري', tier_not_in_rule: 'شريحة خارج القاعدة',
+  no_rule_paid_month: 'إعداد ناقص: لا قاعدة لشهر فاتورة مسدَّدة', below_min_sales: 'دون الحد الأدنى للمبيعات', over_target_no_a: 'لا هدف A أصلي للمكافأة',
 };
 
 export const SOURCE_LABEL: Record<string, string> = { sale: 'مبيعات', return: 'مرتجعات', paid: 'مسدد من ذمم', opening: 'تحصيل افتتاحي' };
 export const SRC_LABEL: Record<string, string> = {
-  rule: 'نسبة الشهر', product: 'من الأصناف', missing: 'نسبة فارغة', no_tier: 'لا شريحة', personal: 'نسبة الإدارة الشخصية', pending: 'معلّقة',
+  rule: 'نسبة الشهر', manual: 'نسبة يدوية', product: 'من الأصناف', missing: 'نسبة فارغة', no_tier: 'لا شريحة', personal: 'نسبة الإدارة الشخصية', pending: 'معلّقة',
 };

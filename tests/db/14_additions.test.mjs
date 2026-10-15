@@ -170,6 +170,10 @@ test('COMM-009: حد أدنى للمبيعات يصفّر الأساسية فق�
     assert.equal(s2.tier_effective, 'NONE');
     assert.equal(num(s2.base_commission), 70);
     assert.ok(s2.lines.every((l) => l.src === 'manual'));
+    // معاينة القاعدة تقبل أعضاء بكائنات الاستثناءات وتعرض الأثر قبل الحفظ
+    const pv = await db.rpc(a, 'preview_commission_rule', { p_id: null, p: { month: '2026-10-01', name: 'معاينة', members: [{ employee_id: e.r1, min_sales: 100 }],
+      tiers: [{ tier: 'A', rep_rate: 5 }] } });
+    assert.deepEqual(pv.map((r) => String(r.employee_id)), [String(e.r1)]);
     // بلوغ الحد الأدنى يرفع التصفير
     await inv(db, a, [{ cust: '502', date: '2026-09-06', lines: [['A1', 600]] }]);
     assert.equal(num((await stmt(db, a, e.r1)).base_commission), 32);

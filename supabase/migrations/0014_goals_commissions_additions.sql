@@ -881,6 +881,41 @@ begin
   return n;
 end $function$;
 
+CREATE OR REPLACE FUNCTION public.preview_commission_rule(p_id bigint, p jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'app'
+AS $function$
+declare
+  v_m date := coalesce((select month from public.commission_rules where id = p_id), app.month_of((p->>'month')::date));
+  v_emps bigint[]; v_before jsonb := '{}'; v_after jsonb := '{}'; e bigint; v_out jsonb := '[]'; v_c jsonb;
+begin
+  perform app.require_perm('P11', 'view');
+  v_emps := array(select distinct x from (
+              select case when jsonb_typeof(x) = 'object' then (x->>'employee_id')::bigint else (x #>> '{}')::bigint end x from jsonb_array_elements(coalesce(p->'members', '[]')) x
+              union select employee_id from public.rule_members where rule_id = p_id) q where app.can_see_employee(x));
+  foreach e in array v_emps loop
+    v_c := app.commission_calc(e, v_m);
+    v_before := v_before || jsonb_build_object(e::text, jsonb_build_object('base', v_c->'base_commission', 'tier', v_c->'tier_effective', 'status', v_c->'status'));
+  end loop;
+  begin
+    perform public.save_commission_rule(p_id, p, 'معاينة', null);
+    foreach e in array v_emps loop
+      v_c := app.commission_calc(e, v_m);
+      v_after := v_after || jsonb_build_object(e::text, jsonb_build_object('base', v_c->'base_commission', 'tier', v_c->'tier_effective', 'status', v_c->'status',
+                                                                           'warnings', v_c->'warnings'));
+    end loop;
+    raise exception using errcode = 'P0002', message = 'preview';
+  exception when sqlstate 'P0002' then null;
+  end;
+  foreach e in array v_emps loop
+    v_out := v_out || jsonb_build_object('employee_id', e, 'name', (select name from public.employees where id = e),
+                                         'before', v_before->e::text, 'after', v_after->e::text);
+  end loop;
+  return v_out;
+end $function$;
+
 -- حساب العمولة: الاستثناءات والتصاعدية والتنويع ومكافأة تجاوز A وتثبيت المستحق ثلاث منازل وتحذير غياب قاعدة شهر الفاتورة
 CREATE OR REPLACE FUNCTION app.commission_calc(p_emp bigint, p_month date)
  RETURNS jsonb

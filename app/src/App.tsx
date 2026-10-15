@@ -1,6 +1,6 @@
 // الهيكل العام: شاشة الاتصال ← التهيئة الأولى ← الدخول ← التطبيق بقائمة الوحدات المسموحة.
 import { useEffect, useState } from 'react';
-import { HashRouter, Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import { getConnection } from './lib/supabase';
 import { PAGES, MODULES } from './lib/pages';
@@ -73,10 +73,15 @@ function Shell() {
   const [pw, setPw] = useState(false);
   const loc = useLocation();
   useEffect(() => { setMenu(false); }, [loc.pathname]);
+  // عند الدخول يبدأ الموظف (مندوب أو مشرف) ببطاقته أو بطاقات فريقه إن سُمحت له، ثم يتنقل بحرية (التنقل §1)
+  const navigate = useNavigate();
+  useEffect(() => { if (!profile!.is_admin && profile!.employee_id !== null && can('P13') && loc.pathname === '/') navigate('/cards', { replace: true }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   const allowed = PAGES.filter((p) => can(p.code));
   // نقطة البداية: أول صفحة مسموحة إن لم تكن الرئيسية مسموحة (P-1)
-  const start = can('P01') ? '/' : allowed[0]?.path ?? '/none';
+  // موظف (مندوب أو مشرف) له صلاحية البطاقات يبدأ ببطاقته أو بطاقات فريقه (التنقل §1)، ومن سواه بالرئيسية إن سُمحت
+  const cardsFirst = !profile!.is_admin && profile!.employee_id !== null && can('P13');
+  const start = cardsFirst ? '/cards' : can('P01') ? '/' : allowed[0]?.path ?? '/none';
 
   // شريط جانبي ثابت بكل الوحدات وصفحاتها المسموحة (UX-008)؛ على الهاتف درج يفتح بزر القائمة
   return (
