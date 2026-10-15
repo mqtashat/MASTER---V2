@@ -40,7 +40,7 @@ export interface EvalComp {
   original: string | null; final: string | null; actual: string | null; status: 'ok' | 'zero' | 'unused'; met: boolean;
   pct: string | null; remaining: string | null; has_path: boolean; required: string | null; path_pct: string | null; path_diff: string | null;
   path_ok: boolean; daily: string | null; expected_today: string | null;
-  team: { sum: string; count: number; parts: { employee_id: number; name: string; final: string; days: number; under: number; share: string }[] } | null;
+  team: { sum: string; count: number; parts: { employee_id: number; name: string | null; hidden?: boolean; final: string; days: number; under: number; share: string }[] } | null;
 }
 export interface Eval {
   plan_id: number; month: string; employee_id: number; role: string; cutoff: string; days: Days;

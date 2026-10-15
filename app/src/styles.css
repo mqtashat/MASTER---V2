@@ -197,7 +197,10 @@ table.inner th, table.inner td { padding: 4px 6px; border-bottom: 1px solid var(
   .overlay { position: static !important; background: none !important; }
   .modal { box-shadow: none !important; max-height: none !important; overflow: visible !important; }
   .modal-body { overflow: visible !important; max-height: none !important; }
+  .drawer, .drawer-body { height: auto !important; max-height: none !important; overflow: visible !important; box-shadow: none !important; }
+  .print-only { display: block !important; }
 }
+.print-only { display: none; }
 
 /* وحدة الأهداف والعمولات: ألوان الشرائح (CARD-009) */
 .tier { display: inline-block; min-width: 26px; text-align: center; border-radius: 4px; padding: 0 6px; font-weight: 700; font-size: 12.5px; }

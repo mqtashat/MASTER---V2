@@ -9,7 +9,7 @@ import { Badge, Drawer, Field, Modal, Msg, useAction, useGuarded } from '../comp
 import { AuditList } from './Settings';
 
 interface Reward {
-  id: number; month: string; name: string; role: 'all' | 'rep' | 'supervisor'; employees: number[] | null; employee_names: string[] | null;
+  id: number; month: string; name: string; role: 'all' | 'rep' | 'supervisor'; employees: number[] | null; employee_names: string[] | null; hidden_employees?: number;
   cond_type: 'tier' | 'metric'; tiers: string[] | null; metric: string | null; metric_min: string | number | null; filters: Filters;
   value_type: 'fixed' | 'percent'; amount: string | number | null; pct: string | number | null; pct_base: 'eligible' | 'base_commission' | null;
   group_name: string | null; stack_mode: 'STACK' | 'HIGHEST_ONLY'; note: string | null;
@@ -63,7 +63,7 @@ export function Rewards() {
           <dl className="kv">
             <dt>الشرط</dt><dd>{condText(r)}</dd>
             <dt>القيمة</dt><dd>{valueText(r)}</dd>
-            <dt>المشمولون</dt><dd>{r.employee_names?.length ? r.employee_names.join('، ') : ROLE_TEXT[r.role]}</dd>
+            <dt>المشمولون</dt><dd>{r.employee_names?.length || r.hidden_employees ? [...(r.employee_names ?? []), ...(r.hidden_employees ? [`${r.hidden_employees} خارج نطاقك`] : [])].join('، ') : ROLE_TEXT[r.role]}</dd>
             <dt>التداخل</dt><dd>{r.group_name ? `مجموعة «${r.group_name}» — ` : ''}{r.stack_mode === 'STACK' ? 'جمع المستحقات' : 'الأعلى فقط'}</dd>
             {r.note && <><dt>ملاحظة</dt><dd>{r.note}</dd></>}
           </dl>

@@ -228,6 +228,15 @@ try {
     await drawer().getByRole('row').filter({ hasText: 'المستحق النهائي' }).getByText('108.000').waitFor();
     await drawer().getByText('جهد إضافي').waitFor();
     await page.screenshot({ path: path.join(out, 'm4-statement.png'), fullPage: true });
+    // الطباعة: رأس الوثيقة بالنوع والموظف والشهر داخل منطقة الطباعة، ولا يظهر على الشاشة (PRINT-001)
+    const head = drawer().locator('.print-only');
+    assert.equal(await head.isVisible(), false);
+    await page.emulateMedia({ media: 'print' });
+    await head.getByText(/^كشف عمولة — /).waitFor({ state: 'visible' });
+    await head.getByText('مندوب أول', { exact: false }).waitFor({ state: 'visible' });
+    await page.pdf({ path: path.join(out, 'm4-statement.pdf'), format: 'A4' });
+    await page.emulateMedia({ media: 'screen' });
+    assert.ok(fs.statSync(path.join(out, 'm4-statement.pdf')).size > 5000);
     await drawer().getByRole('button', { name: 'إغلاق' }).click();
   });
 

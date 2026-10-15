@@ -55,7 +55,7 @@ export function Commissions() {
       {load.error && <Msg kind="bad">{load.error}</Msg>}
       {d && (
         <div className="stats">
-          <div className="stat"><div className="l">المبيعات المؤهلة</div><div className="v num">{fmtAmount(total('eligible'))}</div></div>
+          <div className="stat"><div className="l">المبيعات المؤهلة دون تكرار الفريق</div><div className="v num">{fmtAmount(total('personal_eligible'))}</div></div>
           <div className="stat"><div className="l">العمولة الأساسية</div><div className="v num">{fmtAmount(total('base'))}</div></div>
           <div className="stat"><div className="l">المكافآت</div><div className="v num">{fmtAmount(total('rewards'))}</div></div>
           <div className="stat"><div className="l">المستحق النهائي</div><div className="v num">{fmtAmount(total('final'))}</div></div>
@@ -129,6 +129,14 @@ function Statement({ employeeId, month, onClose, onChanged }: { employeeId: numb
       {load.error && <Msg kind="bad">{load.error}</Msg>}
       {s && (
         <div className="print-doc">
+          {/* رأس الوثيقة المطبوعة: النوع والموظف والفترة والنسخة (PRINT-001) */}
+          <div className="print-only">
+            <h2 className="doc-title">كشف عمولة — {fmtMonth(month)}</h2>
+            <div className="doc-meta">
+              <div>الموظف: <span className="num">{s.employee.emp_number}</span> — {s.employee.name} · {ROLE_LABEL[s.role] ?? s.role}</div>
+              <div>{s.snapshot ? `النسخة المعتمدة رقم ${s.version}` : 'الحساب الحالي — غير معتمد'} · تاريخ الطباعة: <span className="num">{fmtDateTime(new Date().toISOString())}</span></div>
+            </div>
+          </div>
           {s.snapshot && <Msg>نسخة معتمدة رقم {s.version} محفوظة في {fmtDateTime(s.snapshot_at)}؛ لا تتغير بتعديل المصادر.</Msg>}
           {s.warnings.map((w, i) => (
             <Msg key={i} kind={w.blocking ? 'bad' : 'warn'}>

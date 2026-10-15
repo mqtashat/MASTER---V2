@@ -13,7 +13,7 @@ import { AuditList } from './Settings';
 
 interface RuleTier { tier: string; sort: number; rep_rate: string | number | null; sup_rate: string | number | null }
 interface Member { employee_id: number; name: string; emp_number: string }
-interface Rule { id: number; month: string; name: string; note: string | null; tiers: RuleTier[]; members: Member[] }
+interface Rule { id: number; month: string; name: string; note: string | null; tiers: RuleTier[]; members: Member[]; hidden_members?: number }
 interface MonthRes {
   month: string; closed: boolean; rules: Rule[]; uncovered: Member[];
   collection_reps: { id: number; employee_id: number; name: string; emp_number: string; from_month: string; to_month: string | null }[];
@@ -82,7 +82,7 @@ export function CommissionRules() {
                     <td className="num">{t.sup_rate === null ? <span className="muted">من الأصناف</span> : fmtPct(t.sup_rate)}</td></tr>
                 ))}</tbody>
               </table>
-              <p className="small" style={{ marginBottom: 0 }}>المشمولون ({r.members.length}): {r.members.map((m) => m.name).join('، ') || '—'}</p>
+              <p className="small" style={{ marginBottom: 0 }}>المشمولون ({r.members.length + (r.hidden_members ?? 0)}): {r.members.map((m) => m.name).join('، ') || '—'}{r.hidden_members ? ` و${r.hidden_members} خارج نطاقك` : ''}</p>
             </div>
           ))}
           <p className="small muted">نسبة الشريحة الفارغة تعني استخدام نسبة الصنف بحسب تاريخ السند؛ ونسبة الصنف الفارغة تجعل العمولة غير مكتملة.</p>

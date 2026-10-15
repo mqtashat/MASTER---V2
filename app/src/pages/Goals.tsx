@@ -201,7 +201,7 @@ function CompTable({ comps, products }: { comps: EvalComp[]; products: Product[]
           <td className="wrap">{c.label}{!c.affected && <span className="muted small"> · لا يتأثر بالأيام</span>}
             {filtersText(c.filters, products, regions) && <div className="small muted">{filtersText(c.filters, products, regions)}</div>}
             {c.team && <details><summary className="small">مجموع الفريق ({c.team.count})</summary>
-              <table className="inner"><tbody>{c.team.parts.map((p) => <tr key={p.employee_id}><td>{p.name}</td><td className="num">{fmtMetric(p.final, c.kind)}</td>
+              <table className="inner"><tbody>{c.team.parts.map((p) => <tr key={p.employee_id}><td>{p.hidden ? <span className="muted">مندوب خارج نطاقك</span> : p.name}</td><td className="num">{fmtMetric(p.final, c.kind)}</td>
                 <td className="num small">{p.under}/{p.days} يوم</td><td className="num">{fmtMetric(p.share, c.kind)}</td></tr>)}</tbody></table></details>}</td>
           <td className="num">{fmtMetric(c.original, c.kind)}</td><td className="num">{fmtMetric(c.final, c.kind)}</td>
           <td className="num">{fmtMetric(c.actual, c.kind)}</td><td className="num">{c.pct ? fmtPct(c.pct) + '%' : ''}</td>
