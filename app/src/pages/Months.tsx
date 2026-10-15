@@ -12,7 +12,7 @@ type N = string | number | null;
 interface Version { version: number; closed_at: string; closed_name: string | null; note: string | null; reopened_at: string | null; reopen_reason: string | null; totals: Record<string, N> | null }
 interface MonthRow { month: string; status: 'open' | 'closed'; version: number; closed_at: string | null; reopened_at: string | null; reopen_reason: string | null; plans: number; rules: number; versions: Version[] }
 interface Readiness { month: string; closed: boolean; blocking: boolean; totals: Record<string, N>; rows: { employee_id: number; name: string; role: string; tier: string | null; final: N; blocking: boolean; warnings: { code: string; blocking: boolean; message: string }[] }[] }
-interface Diff { version: number | null; rows: { employee_id: number; name: string; saved: Record<string, N>; live: Record<string, N> }[] }
+interface Diff { version: number | null; rows: { employee_id: number; name: string; saved: Record<string, N> | null; live: Record<string, N> }[] }
 
 export function Months() {
   const { profile } = useAuth();
@@ -96,10 +96,10 @@ function MonthView({ m, admin, onClose, onChanged }: { m: MonthRow; admin: boole
           <p className="small muted">الفروق بين النسخة المحفوظة {diff.version} والحساب الحالي من المصادر.</p>
           <table className="inner"><thead><tr><th>الموظف</th><th>الشريحة</th><th className="num">المؤهلة</th><th className="num">النهائي</th></tr></thead>
             <tbody>{diff.rows.map((x) => (
-              <tr key={x.employee_id}><td>{x.name}</td>
-                <td><span className="diff-old">{String(x.saved.tier ?? 'NONE')}</span> ← <span className="diff-new">{String(x.live.tier ?? 'NONE')}</span></td>
-                <td className="num"><span className="diff-old">{fmtAmount(x.saved.eligible)}</span> ← <span className="diff-new">{fmtAmount(x.live.eligible)}</span></td>
-                <td className="num"><span className="diff-old">{fmtAmount(x.saved.final)}</span> ← <span className="diff-new">{fmtAmount(x.live.final)}</span></td></tr>
+              <tr key={x.employee_id}><td>{x.name}{!x.saved && <span className="small muted"> — غير مشمول في النسخة</span>}</td>
+                <td><span className="diff-old">{x.saved ? String(x.saved.tier ?? 'NONE') : '—'}</span> ← <span className="diff-new">{String(x.live.tier ?? 'NONE')}</span></td>
+                <td className="num"><span className="diff-old">{x.saved ? fmtAmount(x.saved.eligible) : '—'}</span> ← <span className="diff-new">{fmtAmount(x.live.eligible)}</span></td>
+                <td className="num"><span className="diff-old">{x.saved ? fmtAmount(x.saved.final) : '—'}</span> ← <span className="diff-new">{fmtAmount(x.live.final)}</span></td></tr>
             ))}</tbody></table>
         </>
       ))}
