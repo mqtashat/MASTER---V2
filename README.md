@@ -12,12 +12,13 @@
 
 ## ابدأ من هنا
 
-1. [كيف تقرأ المرجع وترتيب الأولوية](docs/00-guide/how-to-read.md)
-2. [الأسئلة المفتوحة — ما الذي يمنع البناء](docs/50-open/OPEN-QUESTIONS.md)
-3. [فهرس القرارات وجولات الاعتماد](docs/40-decisions/INDEX.md)
-4. [القواعد التفصيلية حسب المجال](docs/10-spec/README.md)
-5. [تجربة الاستخدام والصفحات P01–P21](docs/20-ux/README.md)
-6. [حالات القبول وخطة الأداء](docs/30-validation/README.md)
+1. [وثيقة المشروع الشاملة](docs/00-guide/project-overview.md)
+2. [كيف تقرأ المرجع وترتيب الأولوية](docs/00-guide/how-to-read.md)
+3. [الأسئلة المفتوحة — ما الذي يمنع البناء](docs/50-open/OPEN-QUESTIONS.md)
+4. [فهرس القرارات وجولات الاعتماد](docs/40-decisions/INDEX.md)
+5. [القواعد التفصيلية حسب المجال](docs/10-spec/README.md)
+6. [تجربة الاستخدام والصفحات P01–P21](docs/20-ux/README.md)
+7. [حالات القبول وخطة الأداء](docs/30-validation/README.md)
 
 ## الهيكل
 
