@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { rpc } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
 import { fmtDate, fmtMonth, fmtPct } from '../lib/format';
-import { writeSheet } from '../lib/excel';
+import { readSheet, writeSheet } from '../lib/excel';
 import {
   addMonths, Eval, EvalComp, Filters, filtersText, fmtMetric, fromMonthInput, METRICS, metricDef, monthInput, Plan, PlanComponent,
   PlanTier, Product, REGION_METRICS, thisMonth, tierClass, useEmployees, useProducts,
@@ -40,7 +40,7 @@ function Goals({ role }: { role: Role }) {
   const [sel, setSel] = useState<number[]>([]);
   const [edit, setEdit] = useState<{ planId: number | null; employeeId: number | null } | null>(null);
   const [view, setView] = useState<number | null>(null);
-  const [dlg, setDlg] = useState<'copy' | 'bulk' | 'templates' | null>(null);
+  const [dlg, setDlg] = useState<'copy' | 'bulk' | 'templates' | 'grid' | null>(null);
   const emps = useEmployees();
   const load = useAction();
 
@@ -67,6 +67,7 @@ function Goals({ role }: { role: Role }) {
           {can(page, 'export') && <button className="btn" onClick={doExport}>تصدير Excel</button>}
           {can(page, 'add') && <button className="btn" onClick={() => setDlg('copy')}>نسخ شهر</button>}
           {can(page, 'edit') && <button className="btn" disabled={!sel.length} onClick={() => setDlg('bulk')}>تعديل جماعي ({sel.length})</button>}
+          {role === 'rep' && (can(page, 'add') || can(page, 'edit')) && <button className="btn" onClick={() => setDlg('grid')}>جدول الأهداف الجماعي</button>}
           <button className="btn" onClick={() => setDlg('templates')}>القوالب</button>
           {can(page, 'add') && <button className="btn primary" onClick={() => setEdit({ planId: null, employeeId: null })}>خطة جديدة</button>}
         </div>
@@ -113,6 +114,7 @@ function Goals({ role }: { role: Role }) {
         candidates={rows.filter((r) => !r.plan_id)} onClose={() => setEdit(null)} onDone={(id) => { setEdit(null); refresh(); setView(id); }} />}
       {dlg === 'copy' && <CopyMonth role={role} month={month} onClose={() => setDlg(null)} onDone={() => { setDlg(null); refresh(); }} />}
       {dlg === 'bulk' && <BulkAdjust plans={sel} onClose={() => setDlg(null)} onDone={() => { setDlg(null); refresh(); }} />}
+      {dlg === 'grid' && <GoalsGrid month={month} candidates={rows} onClose={() => setDlg(null)} onDone={() => { setDlg(null); refresh(); }} />}
       {dlg === 'templates' && <Templates role={role} plans={sel} onClose={() => setDlg(null)} onDone={() => { setDlg(null); refresh(); }} />}
     </>
   );
@@ -201,7 +203,7 @@ function CompTable({ comps, products }: { comps: EvalComp[]; products: Product[]
           <td className="wrap">{c.label}{!c.affected && <span className="muted small"> · لا يتأثر بالأيام</span>}
             {filtersText(c.filters, products, regions) && <div className="small muted">{filtersText(c.filters, products, regions)}</div>}
             {c.team && <details><summary className="small">مجموع الفريق ({c.team.count})</summary>
-              <table className="inner"><tbody>{c.team.parts.map((p) => <tr key={p.employee_id}><td>{p.name}</td><td className="num">{fmtMetric(p.final, c.kind)}</td>
+              <table className="inner"><tbody>{c.team.parts.map((p) => <tr key={p.employee_id}><td>{p.hidden ? <span className="muted">مندوب خارج نطاقك</span> : p.name}</td><td className="num">{fmtMetric(p.final, c.kind)}</td>
                 <td className="num small">{p.under}/{p.days} يوم</td><td className="num">{fmtMetric(p.share, c.kind)}</td></tr>)}</tbody></table></details>}</td>
           <td className="num">{fmtMetric(c.original, c.kind)}</td><td className="num">{fmtMetric(c.final, c.kind)}</td>
           <td className="num">{fmtMetric(c.actual, c.kind)}</td><td className="num">{c.pct ? fmtPct(c.pct) + '%' : ''}</td>
@@ -347,6 +349,7 @@ function PlanEditor({ role, month, planId, employeeId, candidates, onClose, onDo
       <p className="small muted">المكوّن الفارغ القيمة غير مستخدم؛ الصفر يحتاج تصحيحًا أو تعطيلًا ولا يصنع تحقيقًا. المقاييس النسبية لا يخفض هدفها بالأيام، وأهداف الأعداد تقرب للأعلى مرة واحدة بعد كل التعديلات.</p>
 
       {preview && <div className="panel"><h3>المعاينة قبل الاعتماد</h3><EvalView ev={preview} products={products} /></div>}
+      <Field label="ملاحظة على الخطة (اختياري)"><input value={plan.note ?? ''} onChange={(e) => setPlan({ ...plan, note: e.target.value })} /></Field>
       {planId && <Field label="سبب التعديل"><input value={reason} onChange={(e) => setReason(e.target.value)} /></Field>}
       <div className="actions">
         <input className="input" style={{ width: 'auto' }} placeholder="اسم قالب جديد" value={tplName} onChange={(e) => setTplName(e.target.value)} aria-label="اسم القالب" />
@@ -357,7 +360,7 @@ function PlanEditor({ role, month, planId, employeeId, candidates, onClose, onDo
   );
 }
 
-function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; products: Product[]; onChange: (c: PlanComponent) => void; onRemove: () => void }) {
+export function CompEditor({ c, products, onChange, onRemove, hideTarget, hideAffected }: { c: PlanComponent; products: Product[]; onChange: (c: PlanComponent) => void; onRemove?: () => void; hideTarget?: boolean; hideAffected?: boolean }) {
   const def = metricDef(c.metric);
   const f = c.filters ?? {};
   const setF = (n: Partial<Filters>) => onChange({ ...c, filters: { ...f, ...n } });
@@ -370,7 +373,7 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
           {METRICS.map((m) => <option key={m.code} value={m.code}>{m.label}</option>)}
         </select>
       </Field>
-      <Field label={def.kind === 'relative' ? 'الهدف %' : 'الهدف'}><input inputMode="decimal" value={c.target ?? ''} onChange={(e) => onChange({ ...c, target: e.target.value })} /></Field>
+      {!hideTarget && <Field label={def.kind === 'relative' ? 'الهدف %' : 'الهدف'}><input inputMode="decimal" value={c.target ?? ''} onChange={(e) => onChange({ ...c, target: e.target.value })} /></Field>}
       {['net_sales', 'gross_sales', 'quantity', 'customers', 'invoices', 'variety', 'variety_ratio'].includes(c.metric) && <>
         <Field label="نوع البيع"><select value={f.sale_type ?? 'all'} onChange={(e) => setF({ sale_type: e.target.value as Filters['sale_type'] })}>
           <option value="all">المباشر والعروض</option><option value="direct">المباشر فقط</option><option value="promo">العروض فقط</option></select></Field>
@@ -393,21 +396,206 @@ function CompEditor({ c, products, onChange, onRemove }: { c: PlanComponent; pro
             <option value="">{c.metric === 'coverage' ? 'منطقة الموظف' : 'كل المناطق'}</option>{regions.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
         </Field>
       )}
-      {def.kind !== 'relative' && <label className="check"><input type="checkbox" checked={c.affected} onChange={(e) => onChange({ ...c, affected: e.target.checked })} /> يتأثر بتعديل أيام العمل</label>}
-      <button className="btn link" onClick={onRemove}>حذف المكوّن</button>
+      {!hideAffected && def.kind !== 'relative' && <label className="check"><input type="checkbox" checked={c.affected} onChange={(e) => onChange({ ...c, affected: e.target.checked })} /> يتأثر بتعديل أيام العمل</label>}
+      {onRemove && <button className="btn link" onClick={onRemove}>حذف المكوّن</button>}
     </div>
   );
 }
 
+// ---------------------------------------------------------------------
+// جدول الأهداف الجماعي (GOAL-019): هيكل واحد للشهر (شرائح ومكوّنات) يُعمَّم على الكل أو البعض،
+// وكل الأرقام تُدخل لكل موظف في جدول. المعاينة قبل الاعتماد، والاعتماد كله أو لا شيء بسبب واحد.
+// ---------------------------------------------------------------------
+type GComp = PlanComponent & { key: string };
+interface BulkRes { committed: boolean; rows: { employee_id: number; name: string; state: 'new' | 'changed' | 'same' | 'error'; error: string | null }[];
+  counts: { new: number; changed: number; same: number; error: number } }
+const STATE_LABEL: Record<string, string> = { new: 'جديدة', changed: 'متغيرة', same: 'بلا تغيير', error: 'خطأ' };
+let gKey = 0;
+const gComp = (tier: string | null, sort: number): GComp => ({ ...newComp(tier, sort), key: 'k' + ++gKey });
+
+function GoalsGrid({ month, candidates, onClose, onDone }: { month: string; candidates: Row[]; onClose: () => void; onDone: () => void }) {
+  const products = useProducts();
+  const regions = useRegions();
+  const guarded = useGuarded();
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [tiers, setTiers] = useState<PlanTier[]>(DEFAULT_TIERS);
+  const [comps, setComps] = useState<GComp[]>(() => DEFAULT_TIERS.map((t, i) => gComp(t.tier, i + 1)));
+  const [partial, setPartial] = useState<Plan['partial_mode']>('proportional');
+  const [selected, setSelected] = useState<number[]>([]);
+  const [vals, setVals] = useState<Record<number, Record<string, string>>>({});
+  const [uni, setUni] = useState<Record<string, string>>({});
+  const [onlyNoPlan, setOnlyNoPlan] = useState(false);
+  const [search, setSearch] = useState('');
+  const [pv, setPv] = useState<BulkRes | null>(null);
+  const [reason, setReason] = useState('');
+  const { busy, error, setError, run } = useAction();
+  useEffect(() => { rpc<Template[]>('goal_templates_list', { p_role: 'rep' }).then(setTemplates).catch(() => setTemplates([])); }, []);
+
+  const pool = candidates.filter((r) => r.status === 'نشط' || r.plan_id);
+  const shown = pool.filter((r) => (!onlyNoPlan || !r.plan_id) && (!search.trim() || r.name.includes(search.trim()) || r.emp_number === search.trim()));
+  const chosen = pool.filter((r) => selected.includes(r.employee_id));
+  const touch = () => setPv(null);
+  const setTierList = (t: PlanTier[]) => { setTiers(t.map((x, i) => ({ ...x, sort: i + 1 }))); touch(); };
+  const move = (i: number, d: number) => { const t = [...tiers]; const [x] = t.splice(i, 1); t.splice(i + d, 0, x); setTierList(t); };
+  const useTemplate = (id: string) => {
+    const t = templates.find((x) => String(x.id) === id);
+    if (!t) return;
+    const ts = (t.data.tiers ?? DEFAULT_TIERS).map((x, i) => ({ ...x, sort: i + 1 }));
+    const cs = (t.data.components ?? []).map((c, i) => ({ ...c, sort: i + 1, key: 'k' + ++gKey }));
+    setTiers(ts); setComps(cs); setPartial(t.data.partial_mode ?? 'proportional');
+    setUni(Object.fromEntries(cs.filter((c) => c.target !== null && c.target !== '').map((c) => [c.key, String(c.target)])));
+    setVals({}); touch();
+  };
+  const head = (c: GComp) => `${c.tier ?? 'مستقل'} | ${c.label ?? metricDef(c.metric).label} | ${comps.indexOf(c) + 1}`;
+  const cell = (emp: number, key: string) => vals[emp]?.[key] ?? '';
+  const setCell = (emp: number, key: string, v: string) => { setVals({ ...vals, [emp]: { ...(vals[emp] ?? {}), [key]: v } }); touch(); };
+  const spread = () => {
+    const n = { ...vals };
+    for (const r of chosen) n[r.employee_id] = { ...(n[r.employee_id] ?? {}), ...Object.fromEntries(Object.entries(uni).filter(([, v]) => v !== '')) };
+    setVals(n); touch();
+  };
+  const structure = () => ({ partial_mode: partial, tiers: tiers.map((t, i) => ({ tier: t.tier.trim().toUpperCase(), logic: t.logic, sort: i + 1 })),
+    components: comps.map((c) => ({ key: c.key, tier: c.tier, metric: c.metric, filters: c.filters, affected: c.affected, label: c.label })) });
+  const rowsPayload = () => {
+    const bad: string[] = [];
+    const out = chosen.map((r) => ({ employee_id: r.employee_id, targets: Object.fromEntries(comps.map((c) => {
+      const v = (cell(r.employee_id, c.key) ?? '').trim();
+      if (v === '') return [c.key, null];
+      const n = Number(v);
+      if (!Number.isFinite(n) || n < 0) bad.push(`${r.name}: «${v}»`);
+      return [c.key, n];
+    })) }));
+    if (bad.length) throw new Error('قيم غير رقمية أو سالبة: ' + bad.slice(0, 5).join('، '));
+    return out;
+  };
+  const check = () => {
+    if (!chosen.length) throw new Error('اختر موظفًا واحدًا على الأقل');
+    if (!tiers.length || tiers.some((t) => !t.tier.trim())) throw new Error('رمز كل شريحة مطلوب');
+    if (comps.some((c) => c.tier && !tiers.some((t) => t.tier.trim().toUpperCase() === c.tier))) throw new Error('مكوّن مرتبط بشريحة غير معرفة');
+    if (comps.some((c) => c.metric === 'variety_ratio' && !(c.filters?.products ?? []).length)) throw new Error('نسبة التنوع تحتاج قائمة أصناف');
+  };
+  const doPreview = () => run(async () => {
+    check();
+    setPv(await rpc<BulkRes>('bulk_save_goal_plans', { p_month: month, p_role: 'rep', p_structure: structure(), p_rows: rowsPayload(), p_commit: false }));
+  });
+  const commit = () => run(async () => {
+    check();
+    await guarded((code) => rpc('bulk_save_goal_plans', { p_month: month, p_role: 'rep', p_structure: structure(), p_rows: rowsPayload(), p_commit: true, p_reason: reason, p_code: code }));
+    onDone();
+  });
+  const exportSheet = () => writeSheet(`جدول أهداف ${fmtMonth(month).replace('/', '-')}.xlsx`, 'الأهداف', ['الرقم', 'الموظف', ...comps.map(head)],
+    chosen.map((r) => [r.emp_number, r.name, ...comps.map((c) => { const v = cell(r.employee_id, c.key); return v === '' ? null : Number(v); })]));
+  const importSheet = (file: File) => run(async () => {
+    const sh = await readSheet(file);
+    if (!sh.headers.includes('الرقم')) { setError('عمود «الرقم» (الرقم الوظيفي) مطلوب'); return; }
+    const n = { ...vals }; const add: number[] = []; let unknown = 0;
+    for (const x of sh.rows) {
+      const r = pool.find((q) => q.emp_number === (x.cells['الرقم'] ?? '').trim());
+      if (!r) { unknown++; continue; }
+      add.push(r.employee_id);
+      n[r.employee_id] = { ...(n[r.employee_id] ?? {}), ...Object.fromEntries(comps.filter((c) => x.cells[head(c)] !== undefined).map((c) => [c.key, String(x.cells[head(c)] ?? '').trim()])) };
+    }
+    setVals(n); setSelected([...new Set([...selected, ...add])]); touch();
+    if (unknown) setError(`${unknown} صفًا برقم وظيفي غير معروف أو خارج نطاقك تُجوهل؛ راجع الملف`);
+  });
+
+  return (
+    <Modal wide title={`جدول الأهداف الجماعي — ${fmtMonth(month)}`} onClose={onClose} footer={<>
+      <button className="btn" disabled={busy} onClick={doPreview}>معاينة</button>
+      <button className="btn primary" disabled={busy || !pv || pv.counts.error > 0 || !reason.trim()} onClick={commit}>اعتماد الكل ({chosen.length})</button>
+      <button className="btn" onClick={onClose}>إلغاء</button></>}>
+      <p className="small muted">1) حدد هيكل الشهر (الشرائح ومكوّناتها) مرة واحدة، 2) اختر الموظفين، 3) أدخل أرقام كل هدف لكل موظف، 4) عاين ثم اعتمد. الخطة الموجودة لموظف تُستبدل بهذا الهيكل وأرقامه.</p>
+      <div className="grid3">
+        <Field label="استخدام قالب"><select defaultValue="" onChange={(e) => useTemplate(e.target.value)}>
+          <option value="">بلا قالب</option>{templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></Field>
+        <Field label="الشهر الجزئي (التحاق/مغادرة)"><select value={partial} onChange={(e) => { setPartial(e.target.value as Plan['partial_mode']); touch(); }}>
+          <option value="proportional">متناسب مع فترة العمل (الافتراضي)</option><option value="fixed">هدف ثابت</option></select></Field>
+      </div>
+
+      <h3>الشرائح بترتيبها (الأعلى أولًا)</h3>
+      <div className="tbl"><table className="edit-grid"><tbody>{tiers.map((t, i) => (
+        <tr key={i}>
+          <td className="num">{i + 1}</td>
+          <td><input className="input" style={{ width: 70 }} value={t.tier} aria-label="رمز الشريحة"
+            onChange={(e) => { const old = t.tier.trim().toUpperCase(); const v = e.target.value.toUpperCase(); setTiers(tiers.map((x, j) => (j === i ? { ...x, tier: v } : x)));
+              setComps(comps.map((c) => (c.tier === old ? { ...c, tier: v.trim() } : c))); touch(); }} /></td>
+          <td><select className="input" value={t.logic} onChange={(e) => setTierList(tiers.map((x, j) => (j === i ? { ...x, logic: e.target.value as 'AND' | 'OR' } : x)))} aria-label="العلاقة">
+            <option value="AND">AND — جميع الشروط</option><option value="OR">OR — شرط واحد يكفي</option></select></td>
+          <td className="actions">
+            <button className="btn link" disabled={i === 0} onClick={() => move(i, -1)}>أعلى</button>
+            <button className="btn link" disabled={i === tiers.length - 1} onClick={() => move(i, 1)}>أدنى</button>
+            <button className="btn link" onClick={() => { setTierList(tiers.filter((_, j) => j !== i)); setComps(comps.filter((c) => c.tier !== t.tier.trim().toUpperCase())); }}>إلغاء</button>
+          </td>
+        </tr>))}</tbody></table></div>
+      <div><button className="btn" onClick={() => setTierList([...tiers, { tier: '', sort: tiers.length + 1, logic: 'AND' }])}>إضافة شريحة</button></div>
+      {[...tiers.map((t) => t.tier.trim().toUpperCase()), null].map((tier) => (
+        <div key={tier ?? 'indep'} className="panel">
+          <h3>{tier ? <>مكوّنات <b className={tierClass(tier)}>{tier}</b></> : 'أهداف مستقلة (خارج الشرائح)'}</h3>
+          {comps.map((c, i) => c.tier !== tier ? null : (
+            <CompEditor key={c.key} hideTarget c={c} products={products} onChange={(n) => { setComps(comps.map((x, j) => (j === i ? { ...n, key: c.key } : x))); touch(); }}
+              onRemove={() => { setComps(comps.filter((_, j) => j !== i)); touch(); }} />
+          ))}
+          <button className="btn" onClick={() => { setComps([...comps, gComp(tier, comps.length + 1)]); touch(); }}>إضافة مكوّن</button>
+        </div>
+      ))}
+
+      <h3>الموظفون ({chosen.length} مختار)</h3>
+      <div className="filters">
+        <input className="input" placeholder="بحث بالاسم أو الرقم" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="بحث الموظفين" />
+        <label className="check"><input type="checkbox" checked={onlyNoPlan} onChange={(e) => setOnlyNoPlan(e.target.checked)} /> بلا خطة فقط</label>
+        <button className="btn link" onClick={() => { setSelected([...new Set([...selected, ...shown.map((r) => r.employee_id)])]); touch(); }}>اختيار الظاهر</button>
+        <button className="btn link" disabled={!selected.length} onClick={() => { setSelected([]); touch(); }}>مسح الاختيار</button>
+      </div>
+      <div className="picker-list">{shown.map((r) => (
+        <label key={r.employee_id} className="check"><input type="checkbox" checked={selected.includes(r.employee_id)}
+          onChange={(e) => { setSelected(e.target.checked ? [...selected, r.employee_id] : selected.filter((x) => x !== r.employee_id)); touch(); }} />
+          <span className="num">{r.emp_number}</span> — {r.name}{r.plan_id ? ' (لها خطة)' : ''}</label>
+      ))}{!shown.length && <span className="small muted">لا موظفين مطابقين</span>}</div>
+
+      {chosen.length > 0 && (
+        <>
+          <h3>أرقام الأهداف</h3>
+          <div className="actions">
+            <button className="btn" onClick={exportSheet}>تصدير الجدول Excel</button>
+            <label className="btn">استيراد أرقام من Excel<input type="file" accept=".xlsx,.xls" hidden aria-label="ملف أرقام الأهداف" onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importSheet(f); }} /></label>
+          </div>
+          <div className="tbl" style={{ maxHeight: 420 }}><table className="edit-grid">
+            <thead><tr><th>الموظف</th>{comps.map((c) => (
+              <th key={c.key}>{c.tier ? <b className={tierClass(c.tier)}>{c.tier}</b> : 'مستقل'} {c.label ?? metricDef(c.metric).label}
+                {filtersText(c.filters ?? {}, products, regions) && <div className="small muted">{filtersText(c.filters ?? {}, products, regions)}</div>}</th>))}</tr>
+              <tr><th>قيمة موحدة <button className="btn link" onClick={spread}>تعميم</button></th>{comps.map((c) => (
+                <th key={c.key}><input className="input" inputMode="decimal" aria-label={'قيمة موحدة ' + head(c)} value={uni[c.key] ?? ''} onChange={(e) => setUni({ ...uni, [c.key]: e.target.value })} /></th>))}</tr></thead>
+            <tbody>{chosen.map((r) => (
+              <tr key={r.employee_id}><td><span className="num">{r.emp_number}</span> — {r.name}</td>{comps.map((c) => (
+                <td key={c.key}><input className="input" inputMode="decimal" aria-label={`${r.name} ${head(c)}`} value={cell(r.employee_id, c.key)} onChange={(e) => setCell(r.employee_id, c.key, e.target.value)} /></td>))}</tr>
+            ))}</tbody></table></div>
+        </>
+      )}
+
+      {pv && (
+        <div className="panel">
+          <h3>المعاينة</h3>
+          <div className="actions">{(['new', 'changed', 'same', 'error'] as const).map((k) => <Badge key={k} kind={k === 'error' ? 'bad' : k === 'same' ? undefined : 'ok'}>{STATE_LABEL[k]}: {pv.counts[k]}</Badge>)}</div>
+          <table className="inner"><tbody>{pv.rows.map((r) => (
+            <tr key={r.employee_id}><td>{r.name}</td><td>{STATE_LABEL[r.state]}</td><td className="wrap">{r.error}</td></tr>))}</tbody></table>
+          {pv.counts.error > 0 && <Msg kind="bad">صحح أخطاء الصفوف أعلاه ثم عاين من جديد؛ لا يُعتمد شيء قبل خلوها منها.</Msg>}
+        </div>
+      )}
+      <Field label="سبب الحفظ (إلزامي للاعتماد)"><input value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      {error && <Msg kind="bad">{error}</Msg>}
+    </Modal>
+  );
+}
+
 // أصناف قاعدة نسبة التنوع: تُختار عند تعريف المكوّن، والاختيار إلزامي
-function ProductPicker({ products, value, onChange }: { products: Product[]; value: number[]; onChange: (ids: number[]) => void }) {
+export function ProductPicker({ products, value, onChange, label, hint }: { products: Product[]; value: number[]; onChange: (ids: number[]) => void; label?: string; hint?: string }) {
   const [q, setQ] = useState('');
   const sel = new Set(value);
   const shown = products.filter((p) => !q.trim() || p.code.includes(q.trim()) || p.name.includes(q.trim()));
   const toggle = (id: number) => onChange(sel.has(id) ? value.filter((x) => x !== id) : [...value, id]);
   return (
     <div className="product-picker" data-testid="variety-products">
-      <Field label="أصناف القاعدة (إلزامي)" hint="النسبة = ما بيع منها ÷ عددها × 100">
+      <Field label={label ?? 'أصناف القاعدة (إلزامي)'} hint={hint ?? 'النسبة = ما بيع منها ÷ عددها × 100'}>
         <input placeholder="بحث بالكود أو الاسم" value={q} onChange={(e) => setQ(e.target.value)} aria-label="بحث الأصناف" />
       </Field>
       <div className="actions">

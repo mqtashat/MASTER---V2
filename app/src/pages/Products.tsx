@@ -9,6 +9,8 @@ import { DataTable, Column } from '../components/DataTable';
 import { Drawer, Field, Modal, Msg, useAction, useGuarded } from '../components/ui';
 import { ImportWizard, ChangesTable, Counts, PlanError } from '../components/ImportWizard';
 import { AuditList } from './Settings';
+import { ProductPicker } from './Goals';
+import { useProducts } from '../lib/goals';
 
 const TIERS = ['A', 'B', 'C', 'X'];
 const RATE_KEYS = [...TIERS.map((t) => 'rep_' + t), ...TIERS.map((t) => 'supervisor_' + t)];
@@ -27,6 +29,7 @@ export function Products() {
   const [open, setOpen] = useState<number | null>(null);
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [groupsOpen, setGroupsOpen] = useState(false);
   const [ver, setVer] = useState(0);
   const exp = useAction();
   const [expDate, setExpDate] = useState(todayIso());
@@ -73,6 +76,7 @@ export function Products() {
         <div className="actions">
           {can('P04', 'add') && <button className="btn primary" onClick={() => setAdding(true)}>إضافة صنف</button>}
           {can('P04', 'import') && <button className="btn" onClick={() => setImporting(true)}>استيراد</button>}
+          <button className="btn" onClick={() => setGroupsOpen(true)}>مجموعات الأصناف</button>
           {can('P04', 'export') && <>
             <label className="small muted">الأسعار السارية بتاريخ <input type="date" className="input" style={{ width: 'auto' }} value={expDate} onChange={(e) => setExpDate(e.target.value)} /></label>
             <button className="btn" disabled={exp.busy} onClick={doExport}>تصدير</button>
@@ -92,6 +96,7 @@ export function Products() {
       <p className="small muted">سعر البيع والتكلفة للباكيت وشاملان للضريبة؛ لا ضريبة في النظام (DATA-011). عمولة المندوب بالمئة والمشرف بالألف.</p>
       {open !== null && <ProductFile id={open} onClose={() => setOpen(null)} onChanged={() => setVer(ver + 1)} />}
       {adding && <ProductForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); setVer(ver + 1); }} />}
+      {groupsOpen && <ProductGroups onClose={() => setGroupsOpen(false)} />}
       {importing && <ImportWizard spec={productImportSpec} onClose={() => setImporting(false)} onDone={() => setVer(ver + 1)} />}
     </>
   );
@@ -259,3 +264,64 @@ const productImportSpec = {
     </>
   ),
 };
+
+// مجموعات الأصناف العامة (PRD-009): تُعرَّف هنا مرة واحدة وتُستعمل في مكافأة التنويع بحصص المجموعات في قواعد العمولة
+interface PGroup { id: number; name: string; products: { id: number; code: string; name: string }[]; used: boolean }
+
+function ProductGroups({ onClose }: { onClose: () => void }) {
+  const { can } = useAuth();
+  const [groups, setGroups] = useState<PGroup[] | null>(null);
+  const [edit, setEdit] = useState<PGroup | 'new' | null>(null);
+  const [del, setDel] = useState<PGroup | null>(null);
+  const [ver, setVer] = useState(0);
+  const load = useAction();
+  useEffect(() => { let live = true; load.run(async () => { const r = await rpc<PGroup[]>('product_groups_list'); if (live) setGroups(r); }); return () => { live = false; }; /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ver]);
+  return (
+    <Drawer title="مجموعات الأصناف" onClose={onClose} actions={can('P04', 'add') ? <button className="btn primary" onClick={() => setEdit('new')}>مجموعة جديدة</button> : undefined}>
+      {load.error && <Msg kind="bad">{load.error}</Msg>}
+      <p className="small muted">مجموعات عامة للأصناف تُستعمل في مكافأة التنويع بحصص المجموعات داخل قواعد العمولة. صنف واحد يمكن أن يكون في أكثر من مجموعة، لكن لا يُجمع صنف في مجموعتين ضمن القاعدة نفسها.</p>
+      {!groups ? <div className="skeleton" /> : groups.length === 0 ? <div className="panel empty">لا مجموعات بعد.</div> : groups.map((g) => (
+        <div key={g.id} className="panel">
+          <div className="page-head" style={{ marginBottom: 6 }}>
+            <h3>{g.name} <span className="small muted">({g.products.length} صنف){g.used && ' · مستعملة في قاعدة'}</span></h3>
+            <div className="actions">
+              {can('P04', 'edit') && <button className="btn" onClick={() => setEdit(g)}>تعديل</button>}
+              {can('P04', 'edit') && <button className="btn danger" disabled={g.used} onClick={() => setDel(g)}>حذف</button>}
+            </div>
+          </div>
+          <p className="small">{g.products.map((p) => `${p.code} — ${p.name}`).join('، ')}</p>
+        </div>
+      ))}
+      {edit && <GroupForm group={edit === 'new' ? null : edit} onClose={() => setEdit(null)} onDone={() => { setEdit(null); setVer(ver + 1); }} />}
+      {del && <GroupDelete group={del} onClose={() => setDel(null)} onDone={() => { setDel(null); setVer(ver + 1); }} />}
+    </Drawer>
+  );
+}
+
+function GroupForm({ group, onClose, onDone }: { group: PGroup | null; onClose: () => void; onDone: () => void }) {
+  const products = useProducts();
+  const [name, setName] = useState(group?.name ?? '');
+  const [ids, setIds] = useState<number[]>((group?.products ?? []).map((p) => Number(p.id)));
+  const { busy, error, run } = useAction();
+  const save = () => run(async () => { await rpc('save_product_group', { p_id: group?.id ?? null, p_name: name, p_products: `{${ids.join(',')}}` }); onDone(); });
+  return (
+    <Modal wide title={group ? `تعديل «${group.name}»` : 'مجموعة أصناف جديدة'} onClose={onClose}
+      footer={<><button className="btn primary" disabled={busy || !name.trim() || !ids.length} onClick={save}>حفظ</button><button className="btn" onClick={onClose}>إلغاء</button></>}>
+      <Field label="اسم المجموعة"><input value={name} onChange={(e) => setName(e.target.value)} /></Field>
+      <ProductPicker products={products} value={ids} onChange={setIds} label="أصناف المجموعة" hint="اختر الأصناف المنتمية للمجموعة" />
+      {error && <Msg kind="bad">{error}</Msg>}
+    </Modal>
+  );
+}
+
+function GroupDelete({ group, onClose, onDone }: { group: PGroup; onClose: () => void; onDone: () => void }) {
+  const [reason, setReason] = useState('');
+  const { busy, error, run } = useAction();
+  const go = () => run(async () => { await rpc('delete_product_group', { p_id: group.id, p_reason: reason }); onDone(); });
+  return (
+    <Modal title={`حذف «${group.name}»`} onClose={onClose} footer={<><button className="btn danger" disabled={busy || !reason.trim()} onClick={go}>حذف</button><button className="btn" onClick={onClose}>إلغاء</button></>}>
+      <Field label="السبب"><input autoFocus value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+      {error && <Msg kind="bad">{error}</Msg>}
+    </Modal>
+  );
+}

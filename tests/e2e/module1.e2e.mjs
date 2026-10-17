@@ -50,7 +50,7 @@ try {
 
   const importFile = async (route, file, extra) => {
     await page.goto('http://localhost:3100/#' + route);
-    await page.getByRole('button', { name: 'استيراد' }).click();
+    await page.getByRole('button', { name: 'استيراد', exact: true }).click();
     await page.locator('input[type=file]').setInputFiles(file);
     await page.getByText('الصفوف:').waitFor();
     if (extra) await extra();
@@ -120,12 +120,21 @@ try {
     await p2.getByRole('button', { name: 'دخول' }).click();
     await p2.getByRole('heading', { name: 'العملاء' }).waitFor();
     assert.equal(await p2.getByRole('button', { name: 'إضافة عميل' }).count(), 0);
-    assert.equal(await p2.getByRole('button', { name: 'استيراد' }).count(), 0);
+    assert.equal(await p2.getByRole('button', { name: 'استيراد', exact: true }).count(), 0);
     await p2.getByRole('cell', { name: '9003' }).waitFor();
     // لا تمرير أفقي للصفحة على الهاتف (U05)
     const overflow = await p2.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     assert.ok(overflow <= 1, 'تمرير أفقي للصفحة: ' + overflow);
     await p2.screenshot({ path: path.join(out, 'customers-mobile-390.png'), fullPage: true });
+    // الشريط الجانبي على الهاتف درج مغلق يفتح بزر القائمة ويغلق بالانتقال (UX-008)
+    const navLink = p2.locator('#side-nav').getByRole('link', { name: 'العملاء', exact: true });
+    assert.equal(await navLink.isVisible(), false);
+    await p2.getByRole('button', { name: 'القائمة' }).click();
+    await navLink.waitFor({ state: 'visible' });
+    assert.equal(await p2.locator('#side-nav').getByRole('link', { name: 'المستخدمون والصلاحيات' }).count(), 0);
+    await p2.screenshot({ path: path.join(out, 'sidebar-mobile-390.png') });
+    await navLink.click();
+    await navLink.waitFor({ state: 'hidden' });
     // رابط مباشر لصفحة ممنوعة يعيد إلى المسموح
     await p2.goto('http://localhost:3100/#/users');
     await p2.getByRole('heading', { name: 'العملاء' }).waitFor();

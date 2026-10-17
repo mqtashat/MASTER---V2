@@ -1,4 +1,4 @@
-// P02 — العملاء وملف العميل (CUS-001..003، B037، B055، B065، B066)
+// P02 — العملاء وملف العميل (CUS-001..004، B037، B055، B065، B066)
 import { useEffect, useState } from 'react';
 import { sb, rpc } from '../lib/supabase';
 import { useAuth } from '../lib/auth';
@@ -11,6 +11,7 @@ import { Drawer, Field, Modal, Msg, Badge, useAction, useGuarded } from '../comp
 import { ImportWizard, ChangesTable, Counts, PlanError } from '../components/ImportWizard';
 import { AuditList } from './Settings';
 import { EditOpening } from './Openings';
+import { ImportLocations } from './Locations';
 
 export interface CustomerRow {
   id: number; customer_number: string; name: string; company_id: string | null; grace_days: number | null;
@@ -29,7 +30,9 @@ export function Customers() {
   const [adding, setAdding] = useState(false);
   const [importing, setImporting] = useState(false);
   const [ver, setVer] = useState(0);
+  const [importingLoc, setImportingLoc] = useState(false);
   const exportAct = useAction();
+  const exportLoc = useAction();
 
   const build = () => {
     let q = sb().from('customers_v').select('*', { count: 'exact' });
@@ -56,6 +59,14 @@ export function Customers() {
     ]));
   });
 
+  // تصدير المواقع بأعمدة ملف المواقع المعتاد وترتيبه، ويُعاد استيراده كما هو (CUS-004)
+  const doExportLoc = () => exportLoc.run(async () => {
+    const rows = await rpc<{ customer_number: string; name: string; lat: string | null; lng: string | null }[]>('customer_locations', { p_opts: { state: 'all' } });
+    writeSheet('مواقع العملاء.xlsx', 'مواقع العملاء', ['خط العرض', 'خط الطول', 'إسم العميل', 'رقم العميل'], rows.map((r) => [
+      r.lat === null ? null : Number(r.lat), r.lng === null ? null : Number(r.lng), r.name, r.customer_number,
+    ]));
+  });
+
   return (
     <>
       <div className="page-head">
@@ -64,9 +75,12 @@ export function Customers() {
           {can('P02', 'add') && <button className="btn primary" onClick={() => setAdding(true)}>إضافة عميل</button>}
           {can('P02', 'import') && <button className="btn" onClick={() => setImporting(true)}>استيراد</button>}
           {can('P02', 'export') && <button className="btn" disabled={exportAct.busy} onClick={doExport}>{exportAct.busy ? 'جارٍ التصدير…' : 'تصدير'}</button>}
+          {can('P16', 'import') && <button className="btn" onClick={() => setImportingLoc(true)}>استيراد المواقع</button>}
+          {can('P16', 'export') && <button className="btn" disabled={exportLoc.busy} onClick={doExportLoc}>{exportLoc.busy ? 'جارٍ التصدير…' : 'تصدير المواقع'}</button>}
         </div>
       </div>
       {exportAct.error && <Msg kind="bad">{exportAct.error}</Msg>}
+      {exportLoc.error && <Msg kind="bad">{exportLoc.error}</Msg>}
       <div className="filters">
         <input className="input" placeholder="بحث برقم العميل أو اسمه" value={term} onChange={(e) => setTerm(e.target.value)} aria-label="بحث" />
         <select className="input" value={kind} onChange={(e) => setKind(e.target.value)} aria-label="النوع" style={{ minWidth: 120 }}>
@@ -85,6 +99,7 @@ export function Customers() {
         }} />
       {open && <CustomerFile id={open.id} onClose={() => setOpen(null)} onChanged={() => setVer(ver + 1)} />}
       {adding && <CustomerForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); setVer(ver + 1); }} />}
+      {importingLoc && <ImportLocations onClose={() => setImportingLoc(false)} onDone={() => { setImportingLoc(false); setVer(ver + 1); }} />}
       {importing && <ImportWizard spec={customerImportSpec} onClose={() => setImporting(false)} onDone={() => setVer(ver + 1)} />}
     </>
   );

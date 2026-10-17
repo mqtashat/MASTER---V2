@@ -48,7 +48,7 @@ try {
 
   const importFile = async (route, file, extra) => {
     await page.goto(BASE + '#' + route);
-    await page.getByRole('button', { name: 'استيراد' }).click();
+    await page.getByRole('button', { name: 'استيراد', exact: true }).click();
     await page.locator('input[type=file]').setInputFiles(file);
     await page.getByText('الصفوف:').waitFor();
     if (extra) await extra();

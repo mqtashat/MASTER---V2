@@ -1,6 +1,6 @@
 // الهيكل العام: شاشة الاتصال ← التهيئة الأولى ← الدخول ← التطبيق بقائمة الوحدات المسموحة.
 import { useEffect, useState } from 'react';
-import { HashRouter, Link, NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './lib/auth';
 import { getConnection } from './lib/supabase';
 import { PAGES, MODULES } from './lib/pages';
@@ -69,48 +69,52 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
 
 function Shell() {
   const { profile, can, signOut } = useAuth();
-  const [open, setOpen] = useState<string | null>(null);
-  const [burger, setBurger] = useState(false);
+  const [menu, setMenu] = useState(false);
   const [pw, setPw] = useState(false);
   const loc = useLocation();
-  useEffect(() => { setOpen(null); setBurger(false); }, [loc.pathname]);
+  useEffect(() => { setMenu(false); }, [loc.pathname]);
+  // عند الدخول يبدأ الموظف (مندوب أو مشرف) ببطاقته أو بطاقات فريقه إن سُمحت له، ثم يتنقل بحرية (التنقل §1)
+  const navigate = useNavigate();
+  useEffect(() => { if (!profile!.is_admin && profile!.employee_id !== null && can('P13') && loc.pathname === '/') navigate('/cards', { replace: true }); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
 
   const allowed = PAGES.filter((p) => can(p.code));
   // نقطة البداية: أول صفحة مسموحة إن لم تكن الرئيسية مسموحة (P-1)
-  const start = can('P01') ? '/' : allowed[0]?.path ?? '/none';
+  // موظف (مندوب أو مشرف) له صلاحية البطاقات يبدأ ببطاقته أو بطاقات فريقه (التنقل §1)، ومن سواه بالرئيسية إن سُمحت
+  const cardsFirst = !profile!.is_admin && profile!.employee_id !== null && can('P13');
+  const start = cardsFirst ? '/cards' : can('P01') ? '/' : allowed[0]?.path ?? '/none';
 
+  // شريط جانبي ثابت بكل الوحدات وصفحاتها المسموحة (UX-008)؛ على الهاتف درج يفتح بزر القائمة
   return (
-    <>
-      <header className="top">
-        <div className="wrap">
-          <Link to={start} className="brand">ماستر</Link>
-          <button className="btn burger" aria-expanded={burger} onClick={() => setBurger(!burger)}>القائمة</button>
-          <nav className={'modules' + (burger ? ' open' : '')} aria-label="القائمة الرئيسية">
-            {can('P01') && <div className={'menu' + (loc.pathname === '/' ? ' active' : '')}><NavLink to="/" end>الرئيسية</NavLink></div>}
-            {MODULES.map((m) => {
-              const items = allowed.filter((p) => p.module === m);
-              if (!items.length) return null;
-              const active = items.some((p) => p.path === loc.pathname);
-              return (
-                <div key={m} className={'menu' + (active ? ' active' : '')}>
-                  <button aria-expanded={open === m} onClick={() => setOpen(open === m ? null : m)}>{m}</button>
-                  {open === m && (
-                    <ul>{items.map((p) => (
-                      <li key={p.code}><NavLink to={p.path}>{p.name}{!p.ready && <span className="muted small"> — قيد البناء</span>}</NavLink></li>
-                    ))}</ul>
-                  )}
-                </div>
-              );
-            })}
-          </nav>
-          <span className="spacer" />
-          <span className="user-chip">
-            <span>{profile!.display_name}</span>
-            <button className="btn link" onClick={() => setPw(true)}>كلمة المرور</button>
-            <button className="btn link" onClick={signOut}>خروج</button>
-          </span>
+    <div className={'app' + (menu ? ' menu-open' : '')}>
+      <div className="mobile-bar no-print">
+        <button className="btn" aria-expanded={menu} aria-controls="side-nav" onClick={() => setMenu(!menu)}>القائمة</button>
+        <Link to={start} className="brand">ماستر</Link>
+      </div>
+      {menu && <div className="scrim no-print" onClick={() => setMenu(false)} />}
+      <aside id="side-nav" className="sidebar no-print" onClick={(e) => { if ((e.target as HTMLElement).closest('a')) setMenu(false); }}>
+        <div className="side-head"><Link to={start} className="brand">ماستر</Link></div>
+        <nav className="side-scroll" aria-label="القائمة الرئيسية">
+          {can('P01') && <NavLink className="side-link" to="/" end>الرئيسية</NavLink>}
+          {MODULES.map((m) => {
+            const items = allowed.filter((p) => p.module === m);
+            if (!items.length) return null;
+            const active = items.some((p) => p.path === loc.pathname);
+            return (
+              <div key={m} className={'side-group' + (active ? ' active' : '')}>
+                <div className="side-title">{m}</div>
+                <ul>{items.map((p) => (
+                  <li key={p.code}><NavLink className="side-link" to={p.path}>{p.name}{!p.ready && <span className="muted small"> — قيد البناء</span>}</NavLink></li>
+                ))}</ul>
+              </div>
+            );
+          })}
+        </nav>
+        <div className="side-foot user-chip">
+          <span>{profile!.display_name}</span>
+          <button className="btn link" onClick={() => setPw(true)}>كلمة المرور</button>
+          <button className="btn link" onClick={signOut}>خروج</button>
         </div>
-      </header>
+      </aside>
       <main className="wrap">
         <Routes>
           {allowed.map((p) => {
@@ -122,7 +126,7 @@ function Shell() {
         </Routes>
       </main>
       {pw && <ChangePassword onClose={() => setPw(false)} />}
-    </>
+    </div>
   );
 }
 
